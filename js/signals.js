@@ -111,6 +111,30 @@ export function relationshipSignal(encounters, today) {
   return { label, reasons, meetings: n, asks: allAsks };
 }
 
+const URGENCY_RANK = { 'Stalled - possible tire-kicker': 1, 'Steady - nurture': 2, New: 3, 'Cooling - lost for now': 4 };
+
+// Act-now = the rules already say Warming (either flavor), or the saved AI read overrides to it.
+export function isActNow(signal, ai) {
+  return signal.label.startsWith('Warming') || (!!ai && ai.label === 'Warming - act now');
+}
+
+// Bucket for sorting: act-now first, then Stalled, Steady, New, Cooling.
+export function urgencyRank(signal, ai) {
+  return isActNow(signal, ai) ? 0 : (URGENCY_RANK[signal.label] ?? 5);
+}
+
+// A short, concrete reason for an "act now" row: the AI's next step if it overrides to act-now,
+// else a concrete ask, else the job-change line, else the latest note.
+export function actNowReason(signal, ai, encounters) {
+  if (ai && ai.label === 'Warming - act now' && ai.nextStep) return ai.nextStep;
+  if (signal.asks.length) return `Asked about ${signal.asks.join(', ')}`;
+  if (signal.label === 'Warming - new role, re-engage') {
+    return signal.reasons.find((r) => r.startsWith('Job change:')) || 'New role - re-engage';
+  }
+  const latest = [...encounters].sort(byDate).at(-1);
+  return latest && latest.note ? cutNote(latest.note) : signal.label;
+}
+
 export function cutNote(note, max = 80) {
   const s = String(note || '').trim();
   if (s.length <= max) return s;

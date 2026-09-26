@@ -1,6 +1,6 @@
 import {
   relationshipSignal, findAsks, seniority, timelineMarkers, summaryLine, hubspotPayload, contactsCsv, cutNote,
-  withEncounterContact,
+  withEncounterContact, isActNow, urgencyRank, actNowReason,
 } from '../js/signals.js';
 
 const TODAY = '2026-09-26';
@@ -109,5 +109,35 @@ export default function signalsTests(t, data) {
     const lines = contactsCsv(rows).split('\r\n');
     t.eq(lines.length - 1, people.length);
     t.ok(lines.some((l) => l.startsWith('Jonathan Cohen,') && l.includes('jon@meridiafx.io')), 'Jonathan row has jon@meridiafx.io');
+  });
+
+  t.group('Urgency helpers');
+
+  const aiActNow = { label: 'Warming - act now', arc: 'x', nextStep: 'Send the proposal before Q3 ends', agreesWithRules: false, disagreementReason: 'deadline in the notes' };
+
+  t.test('isActNow: true for both Warming rules labels, and for a non-Warming rules label with an AI act-now override', () => {
+    t.eq(isActNow({ label: 'Warming - act now', asks: [] }, null), true);
+    t.eq(isActNow({ label: 'Warming - new role, re-engage', asks: [] }, null), true);
+    t.eq(isActNow({ label: 'Steady - nurture', asks: [] }, aiActNow), true);
+  });
+  t.test('isActNow: false for New/Cooling/Stalled/Steady with no AI or a non-act-now AI label', () => {
+    for (const label of ['New', 'Cooling - lost for now', 'Stalled - possible tire-kicker', 'Steady - nurture']) {
+      t.eq(isActNow({ label, asks: [] }, null), false, `${label}, no AI`);
+      t.eq(isActNow({ label, asks: [] }, { label: 'Steady - nurture' }), false, `${label}, AI agrees on Steady`);
+    }
+  });
+  t.test('urgencyRank: act-now (0) < Stalled (1) < Steady (2) < New (3) < Cooling (4)', () => {
+    const rank = (label) => urgencyRank({ label, asks: [] }, null);
+    t.eq(['Warming - act now', 'Stalled - possible tire-kicker', 'Steady - nurture', 'New', 'Cooling - lost for now'].map(rank), [0, 1, 2, 3, 4]);
+  });
+  t.test('actNowReason: Ahmed-shaped signal with a concrete ask', () => {
+    t.eq(actNowReason({ label: 'Warming - act now', asks: ['proposal'], reasons: [] }, null, []), 'Asked about proposal');
+  });
+  t.test('actNowReason: an AI act-now override returns its next step verbatim', () => {
+    t.eq(actNowReason({ label: 'Steady - nurture', asks: [], reasons: [] }, aiActNow, []), 'Send the proposal before Q3 ends');
+  });
+  t.test('actNowReason: a new-role signal returns its job-change line', () => {
+    const signal = { label: 'Warming - new role, re-engage', asks: [], reasons: ['1 meeting', 'Job change: Atlasbeds → Sunmerra Tours'] };
+    t.eq(actNowReason(signal, null, []), 'Job change: Atlasbeds → Sunmerra Tours');
   });
 }
