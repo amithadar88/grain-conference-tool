@@ -87,4 +87,25 @@ export default function storeTests(t, data) {
     store.updateSettings({ team: ['Noa', 'Amit'] });
     t.eq(store.team(), ['Noa', 'Amit']);
   });
+
+  t.group('Needs review: every open suggestion in one place');
+
+  t.test('Lists all skipped suggestions; "Different" and "Same person" remove them', () => {
+    const { store } = fresh();
+    const dana = store.saveCapture(capture({ name: 'Dana Levy', company: 'Vantelo Pay' }), { unresolvedIds: ['p-dana'] }).personId;
+    const david = store.saveCapture(capture({ name: 'David Cohen', company: '' }), { unresolvedIds: ['p-david-t', 'p-david-c'] }).personId;
+    t.eq(store.unresolvedPairs(), [[dana, 'p-dana'], [david, 'p-david-t'], [david, 'p-david-c']]);
+    store.resolveDifferent(david, 'p-david-t');
+    store.mergeInto(dana, 'p-dana');
+    t.eq(store.unresolvedPairs(), [[david, 'p-david-c']]);
+  });
+  t.test('A pair whose candidate no longer exists is not listed', () => {
+    const { store } = fresh();
+    const a = store.saveCapture(capture({ name: 'Sam One', company: 'X' })).personId;
+    const b = store.saveCapture(capture({ name: 'Sam One', company: 'X' }), { unresolvedIds: [a] }).personId;
+    const c = store.saveCapture(capture({ name: 'Sam One', company: 'Y' }), { unresolvedIds: [a] }).personId;
+    store.mergeInto(b, a);
+    store.mergeInto(a, 'p-priya'); // the candidate itself is merged away
+    t.eq(store.unresolvedPairs().filter(([from]) => from === c), []);
+  });
 }

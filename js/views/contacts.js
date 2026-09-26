@@ -2,7 +2,7 @@
 import { relationshipSignal, timelineMarkers, hubspotPayload, contactsCsv, withEncounterContact } from '../signals.js';
 import { validateArc } from '../validate.js';
 import { aiArc, hubspotPush } from '../api.js';
-import { esc, fmtDate, signalClass } from './ui.js';
+import { esc, fmtDate, signalClass, flash } from './ui.js';
 
 let query = '';
 
@@ -34,6 +34,7 @@ export function render(el, ctx, personId) {
   <p class="needs-net-hint" hidden>HubSpot push needs a connection.</p>
   <input type="search" id="q" placeholder="Search name or company…" value="${esc(query)}" aria-label="Search contacts" style="margin:8px 0">
   <div id="push-result">${keptResult('list')}</div>
+  ${reviewHTML(store)}
   <ul class="rows" id="list"></ul>
 </section>`;
 
@@ -52,11 +53,40 @@ export function render(el, ctx, personId) {
   el.querySelector('#q').addEventListener('input', (e) => { query = e.target.value; draw(); });
   draw();
 
+  el.querySelectorAll('[data-review]').forEach((b) => b.addEventListener('click', () => {
+    const [from, to] = b.dataset.pair.split('|');
+    if (b.dataset.review === 'same') {
+      const name = store.person(to).name;
+      store.mergeInto(from, to);
+      flash(`✓ Merged into ${name}`);
+    } else {
+      store.resolveDifferent(from, to);
+      flash('✓ Kept as two people');
+    }
+    render(el, ctx);
+    ctx.applyNet();
+  }));
   el.querySelector('#csv').addEventListener('click', () => downloadCsv(rows, ctx.today));
   el.querySelector('#push-all').addEventListener('click', (e) => {
     e.currentTarget.disabled = true;
     pushRows(ctx, unpushed, el.querySelector('#push-result'), 'list', () => { render(el, ctx); ctx.applyNet(); });
   });
+}
+
+// "Needs review (N)": every suggestion the rep skipped at capture, to clean up in the evening.
+function reviewHTML(store) {
+  const pairs = store.unresolvedPairs();
+  if (!pairs.length) return '';
+  const who = (id) => {
+    const p = store.person(id);
+    const n = store.encountersFor(id).length;
+    return `<a href="#contacts/${encodeURIComponent(id)}"><b>${esc(p.name)}</b></a> <span class="muted">(${[p.company, `${n} meeting${n === 1 ? '' : 's'}`].filter(Boolean).map(esc).join(', ')})</span>`;
+  };
+  return `<section class="review box"><h3>Needs review (${pairs.length})</h3>
+    <p class="hint">Possible matches skipped at capture. Same person merges them; Different never asks again.</p>
+    <ul>${pairs.map(([from, to]) => `<li>${who(from)} ↔ ${who(to)}
+      <div class="row"><button class="chip" data-review="same" data-pair="${esc(from)}|${esc(to)}">Same person</button>
+      <button class="chip" data-review="diff" data-pair="${esc(from)}|${esc(to)}">Different</button></div></li>`).join('')}</ul></section>`;
 }
 
 function downloadCsv(rows, today) {

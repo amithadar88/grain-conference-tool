@@ -149,6 +149,12 @@ export function createStore({ seed, storage, prefix = 'grain.' }) {
 
     // ---- Unresolved suggestions (rep saved without answering) ----
     unresolvedFor(personId) { return overlay.unresolvedMatches[personId] || []; },
+    // Every open suggestion, as [newPersonId, candidateId] pairs; skips people that no longer exist.
+    unresolvedPairs() {
+      return Object.entries(overlay.unresolvedMatches)
+        .flatMap(([from, ids]) => ids.map((id) => [from, id]))
+        .filter(([from, id]) => api.person(from) && api.person(id));
+    },
     resolveDifferent(personId, candidateId) {
       overlay.notSamePairs.push([personId, candidateId]);
       const rest = api.unresolvedFor(personId).filter((id) => id !== candidateId);
