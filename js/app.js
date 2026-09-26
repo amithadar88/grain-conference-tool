@@ -7,8 +7,9 @@ import * as plan from './views/plan.js';
 import * as capture from './views/capture.js';
 import * as contacts from './views/contacts.js';
 import * as settings from './views/settings.js';
+import * as add from './views/addConference.js';
 
-const VIEWS = { events, plan, capture, contacts, settings };
+const VIEWS = { events, plan, capture, contacts, settings, add };
 const TAB_OF = { add: 'events' }; // sub-pages highlight their parent tab
 const viewEl = document.getElementById('view');
 const netEl = document.getElementById('net');
