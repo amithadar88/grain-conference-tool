@@ -32,6 +32,7 @@ Where AI tools helped vs. got in the way. Feeds the "how I used AI" part of the 
 | 26 | Build | Me (manual testing on a real phone) | My testing on a phone caught UX issues the automated and headless checks missed: an easy-to-miss "Saved" message, an offline banner nobody would notice, result messages vanishing too fast, a cluttered event picker, a close button that scrolls away. Lesson: tests prove logic, humans judge usability. | Human in the loop |
 | 27 | Process | Me + Claude Code | Managing cost and context: after a long break, I started a fresh session from the plan and the progress ledger instead of continuing a huge stale one. It saved quota and kept the agent focused. | Helped |
 | 28 | Polish | Claude Code | Its screenshots of the polish work caught two older bugs no test covered: event titles hidden under the sticky header, and Plan cards that had lost their tier colour. | Helped |
+| 29 | Build | Claude Code | User caught a stale-cache bug missed by every earlier check: an edited conference note still showed the old text on localhost. Root cause was subtler than the service worker's cache — plain `fetch()` calls (app seed load and the service worker's own "network-first" fetch) let the browser's ordinary HTTP cache answer without a real round trip. Fixed with `cache: 'no-cache'` on both. | User caught it; AI fixed narrowly |
 
 ## Notes for the video
 -

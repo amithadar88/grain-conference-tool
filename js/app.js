@@ -52,7 +52,9 @@ function applyNet() {
 
 async function loadSeed() {
   const get = async (p) => {
-    const r = await fetch(p);
+    // no-cache: always revalidate with the server, so an edited seed file (or a stale
+    // browser disk cache) never wins over a fresh deploy, on localhost or Netlify.
+    const r = await fetch(p, { cache: 'no-cache' });
     if (!r.ok) throw new Error(`${p}: ${r.status}`);
     return r.json();
   };

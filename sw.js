@@ -2,7 +2,7 @@
 // show up immediately) and refreshes the saved copy. Only when the network fails or takes more
 // than 3 seconds do we answer from the saved copy. No sync, no queues.
 // When you add a file to the app, add it to SHELL and bump CACHE.
-const CACHE = 'grain-v3';
+const CACHE = 'grain-v4';
 const SHELL = [
   './',
   'index.html',
@@ -53,7 +53,9 @@ function withTimeout(promise, ms) {
 async function networkFirst(req) {
   const cache = await caches.open(CACHE);
   try {
-    const res = await withTimeout(fetch(req), 3000);
+    // no-cache: skip the browser's HTTP cache so this really hits the network (a stale disk
+    // cache would otherwise beat "network-first" and never surface a new deploy or seed edit).
+    const res = await withTimeout(fetch(req, { cache: 'no-cache' }), 3000);
     if (res.ok) cache.put(req, res.clone());
     return res;
   } catch {

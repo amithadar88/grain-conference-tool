@@ -275,6 +275,10 @@ closing, or polite tire-kicker?
   request that skips the cache) and re-checks every 15 s until the network is back.
 - **New deploys take over at once:** the service worker activates immediately
   (skipWaiting + clients.claim), so nobody has to close their tabs to get a fix.
+- **"Network-first" needs `cache: 'no-cache'` on the fetch itself.** The service worker's
+  strategy was already network-first, but the plain `fetch()` calls (in the service worker
+  and in the app's seed load) still let the browser's own HTTP cache answer without a real
+  round trip, so an edited seed file could sit stale on-screen. Fixed on both call sites.
 
 ### HubSpot
 - Via a Netlify function because HubSpot blocks direct browser calls (CORS).
