@@ -1,10 +1,22 @@
 // Contacts tab: list, contact page (timeline + signal), AI summary, HubSpot push, CSV.
-import { relationshipSignal, timelineMarkers, hubspotPayload, contactsCsv, withEncounterContact } from '../signals.js';
+import { relationshipSignal, timelineMarkers, hubspotPayload, contactsCsv, withEncounterContact, urgencyRank } from '../signals.js';
 import { validateArc } from '../validate.js';
 import { aiArc, hubspotPush } from '../api.js';
+import { renderFollowup } from './followup.js';
 import { esc, fmtDate, signalClass, flash } from './ui.js';
 
 let query = '';
+let sortMode = 'urgency'; // 'urgency' | 'name' | 'recent'
+let filterBucket = ''; // '' (All) | 'Warming' | 'Cooling' | 'Stalled' | 'Steady' | 'New'
+
+// "Warming - act now" -> "Warming" (matches signalClass's own bucketing, used for filter chips).
+const labelBucket = (label) => label.split(' ')[0];
+const lastDate = (r) => r.encounters.at(-1).date;
+const SORTERS = {
+  urgency: (a, b) => urgencyRank(a.signal, a.ai) - urgencyRank(b.signal, b.ai) || lastDate(b).localeCompare(lastDate(a)),
+  name: (a, b) => a.person.name.localeCompare(b.person.name),
+  recent: (a, b) => lastDate(b).localeCompare(lastDate(a)),
+};
 
 // The last push result stays on screen until the next push or until the rep leaves the page.
 let pushResult = null; // { where: 'list' | personId, html }
@@ -14,16 +26,18 @@ if (typeof window !== 'undefined') window.addEventListener('hashchange', () => {
 function rowsFor(store, today) {
   return store.people().map((p) => {
     const encounters = store.encountersFor(p.id);
-    return { person: withEncounterContact(p, encounters), encounters, signal: relationshipSignal(encounters, today) };
-  }).filter((r) => r.encounters.length)
-    .sort((a, b) => b.encounters[b.encounters.length - 1].date.localeCompare(a.encounters[a.encounters.length - 1].date));
+    return { person: withEncounterContact(p, encounters), encounters, signal: relationshipSignal(encounters, today), ai: store.aiSummary(p.id) };
+  }).filter((r) => r.encounters.length);
 }
+
+const BUCKET_ORDER = ['Warming', 'Stalled', 'Steady', 'New', 'Cooling'];
 
 export function render(el, ctx, personId) {
   if (personId) return renderPerson(el, ctx, personId);
   const { store } = ctx;
   const rows = rowsFor(store, ctx.today);
   const unpushed = rows.filter((r) => r.person.email && !store.hubspotPushed(r.person.id));
+  const counts = rows.reduce((m, r) => { const b = labelBucket(r.signal.label); m[b] = (m[b] || 0) + 1; return m; }, {});
 
   el.innerHTML = `<section class="view">
   <div class="view-head"><h2>Contacts</h2>
@@ -33,6 +47,15 @@ export function render(el, ctx, personId) {
     </div></div>
   <p class="needs-net-hint" hidden>HubSpot push needs a connection.</p>
   <input type="search" id="q" placeholder="Search name or company…" value="${esc(query)}" aria-label="Search contacts" style="margin:8px 0">
+  <div class="seg" id="sort-seg" role="radiogroup" aria-label="Sort" style="margin-bottom:8px">
+    ${[['urgency', 'Urgency'], ['name', 'Name A-Z'], ['recent', 'Last met']].map(([v, label]) =>
+      `<label><input type="radio" name="sort" value="${v}"${sortMode === v ? ' checked' : ''}><span>${label}</span></label>`).join('')}
+  </div>
+  <div class="row" id="label-filter" style="flex-wrap:wrap;margin-bottom:8px">
+    <button type="button" class="chip" data-filter="" aria-pressed="${filterBucket === ''}">All (${rows.length})</button>
+    ${BUCKET_ORDER.filter((b) => counts[b]).map((b) =>
+      `<button type="button" class="chip" data-filter="${b}" aria-pressed="${filterBucket === b}">${b} (${counts[b]})</button>`).join('')}
+  </div>
   <div id="push-result">${keptResult('list')}</div>
   ${reviewHTML(store)}
   <ul class="rows" id="list"></ul>
@@ -41,16 +64,30 @@ export function render(el, ctx, personId) {
   const list = el.querySelector('#list');
   const draw = () => {
     const q = query.toLowerCase();
-    list.innerHTML = rows.filter((r) => !q || `${r.person.name} ${r.person.company}`.toLowerCase().includes(q)).map((r) => {
+    const filtered = rows
+      .filter((r) => !filterBucket || labelBucket(r.signal.label) === filterBucket)
+      .filter((r) => !q || `${r.person.name} ${r.person.company}`.toLowerCase().includes(q))
+      .sort(SORTERS[sortMode]);
+    list.innerHTML = filtered.map((r) => {
       const last = r.encounters[r.encounters.length - 1];
       return `<li><a href="#contacts/${encodeURIComponent(r.person.id)}">
         <b>${esc(r.person.name)}</b> · ${esc(r.person.company || '')}
         <div><span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span>
+        ${r.ai && r.ai.label !== r.signal.label ? `<span class="sig ${signalClass(r.ai.label)}">AI: ${esc(r.ai.label)}</span>` : ''}
         <span class="muted">${r.encounters.length} meeting${r.encounters.length === 1 ? '' : 's'} · last: ${esc(last.event)}, ${esc(fmtDate(last.date))}</span></div>
       </a></li>`;
     }).join('') || '<li class="muted">No contacts match.</li>';
   };
   el.querySelector('#q').addEventListener('input', (e) => { query = e.target.value; draw(); });
+  el.querySelector('#sort-seg').addEventListener('change', (e) => {
+    if (e.target.name === 'sort') { sortMode = e.target.value; render(el, ctx); }
+  });
+  el.querySelector('#label-filter').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-filter]');
+    if (!b) return;
+    filterBucket = b.dataset.filter;
+    render(el, ctx);
+  });
   draw();
 
   el.querySelectorAll('[data-review]').forEach((b) => b.addEventListener('click', () => {
@@ -148,6 +185,9 @@ function renderPerson(el, ctx, personId) {
   <p class="muted">${[person.title, person.company].filter(Boolean).map(esc).join(' · ')}
     ${person.email ? `<br>${esc(person.email)}` : ''}${person.linkedin ? `<br>${esc(person.linkedin)}` : ''}</p>
 
+  <div id="ai"></div>
+  <div id="followup"></div>
+
   ${unresolved.map((c) => {
     const encs = store.encountersFor(c.id);
     const last = encs[encs.length - 1];
@@ -157,8 +197,6 @@ function renderPerson(el, ctx, personId) {
 
   <div class="box"><b>Rules:</b> <span class="sig ${signalClass(signal.label)}">${esc(signal.label)}</span>
     <div class="hint">${signal.reasons.map(esc).join(' · ')}</div></div>
-
-  <div id="ai"></div>
 
   <h3>Timeline</h3>
   <ol class="timeline-list">${timelineMarkers(encounters).map(({ encounter: e, marks }) => `<li>
@@ -214,24 +252,26 @@ function renderPerson(el, ctx, personId) {
     });
   }
   renderAi(el.querySelector('#ai'), ctx, person, encounters, signal);
+  renderFollowup(el.querySelector('#followup'), ctx, { person, encounters, signal, ai: store.aiSummary(personId) });
 }
 
-// ---- AI relationship summary ----
+// ---- AI relationship summary: a card at the top of the page, right under the name ----
 function renderAi(box, ctx, person, encounters, signal) {
   const { store } = ctx;
   if (encounters.length < 2) { box.innerHTML = ''; return; }
   const s = store.aiSummary(person.id);
   const stale = s && s.basedOnEncounters < encounters.length;
-  const summaryHtml = s ? `<div class="box ai${stale ? ' stale' : ''}">
-      <b>AI:</b> <span class="sig ${signalClass(s.label)}">${esc(s.label)}</span>
-      ${s.agreesWithRules ? '' : `<p class="disagree">AI disagrees with rules: ${esc(s.disagreementReason)}</p>`}
-      <p>${esc(s.arc)}</p>
-      <p><b>Next step:</b> ${esc(s.nextStep)}</p>
-      <p class="hint">AI · ${esc(fmtDate(s.generatedAt))} · based on ${s.basedOnEncounters} meetings${stale ? ' · new meeting since this summary' : ''}</p>
-    </div>` : '';
   const showButton = !s || stale;
-  box.innerHTML = `${summaryHtml}${showButton ? `<button class="btn" id="ai-btn" data-needs-net>${s ? 'Regenerate AI summary' : 'AI summary'}</button>
-    <span class="needs-net-hint" hidden>Needs connection</span>` : ''}<p class="error" id="ai-err" hidden></p>`;
+  const body = s
+    ? `<span class="sig ${signalClass(s.label)}">${esc(s.label)}</span>
+       ${s.agreesWithRules ? '' : `<p class="disagree">AI disagrees with the rules (${esc(signal.label)}): ${esc(s.disagreementReason)}</p>`}
+       <p>${esc(s.arc)}</p>
+       <p><b>Next step:</b> ${esc(s.nextStep)}</p>
+       <p class="hint">AI · ${esc(fmtDate(s.generatedAt))} · based on ${s.basedOnEncounters} meetings${stale ? ' · new meeting since this summary' : ''}</p>`
+    : '<p class="hint">AI reads the meeting notes and judges whether this is warming or a tire-kicker.</p>';
+  box.innerHTML = `<div class="box ai${stale ? ' stale' : ''}"><b>AI summary</b>${body}
+    ${showButton ? `<button class="btn" id="ai-btn" data-needs-net>${s ? 'Regenerate AI summary' : 'Generate'}</button>
+    <span class="needs-net-hint" hidden>Needs connection</span>` : ''}<p class="error" id="ai-err" hidden></p></div>`;
   const btn = box.querySelector('#ai-btn');
   if (!btn) return;
   btn.addEventListener('click', async () => {
@@ -249,7 +289,7 @@ function renderAi(box, ctx, person, encounters, signal) {
       err.textContent = r.ok ? "The AI's answer didn't make sense: try again." : r.message;
       err.hidden = false;
       btn.disabled = false;
-      btn.textContent = s ? 'Regenerate AI summary' : 'AI summary';
+      btn.textContent = s ? 'Regenerate AI summary' : 'Generate';
       return;
     }
     store.setAiSummary(person.id, { ...r.result, generatedAt: ctx.today, basedOnEncounters: encounters.length, model: r.model });
