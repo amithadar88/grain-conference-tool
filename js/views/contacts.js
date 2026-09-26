@@ -1,5 +1,7 @@
-// Contacts tab: list and contact page (timeline + rules signal).
+// Contacts tab: list, contact page (timeline + signal), AI summary.
 import { relationshipSignal, timelineMarkers } from '../signals.js';
+import { validateArc } from '../validate.js';
+import { aiArc } from '../api.js';
 import { esc, fmtDate, signalClass } from './ui.js';
 
 let query = '';
@@ -64,6 +66,7 @@ function renderPerson(el, ctx, personId) {
   <div class="box"><b>Rules:</b> <span class="sig ${signalClass(signal.label)}">${esc(signal.label)}</span>
     <div class="hint">${signal.reasons.map(esc).join(' · ')}</div></div>
 
+  <div id="ai"></div>
 
   <h3>Timeline</h3>
   <ol class="timeline-list">${timelineMarkers(encounters).map(({ encounter: e, marks }) => `<li>
@@ -96,6 +99,48 @@ function renderPerson(el, ctx, personId) {
     const f = new FormData(e.target);
     store.patchPerson(personId, Object.fromEntries(['email', 'linkedin', 'title', 'company'].map((k) => [k, String(f.get(k) || '').trim()])));
     renderPerson(el, ctx, personId);
+    ctx.applyNet();
+  });
+  renderAi(el.querySelector('#ai'), ctx, person, encounters, signal);
+}
+
+// ---- AI relationship summary ----
+function renderAi(box, ctx, person, encounters, signal) {
+  const { store } = ctx;
+  if (encounters.length < 2) { box.innerHTML = ''; return; }
+  const s = store.aiSummary(person.id);
+  const stale = s && s.basedOnEncounters < encounters.length;
+  const summaryHtml = s ? `<div class="box ai${stale ? ' stale' : ''}">
+      <b>AI:</b> <span class="sig ${signalClass(s.label)}">${esc(s.label)}</span>
+      ${s.agreesWithRules ? '' : `<p class="disagree">AI disagrees with rules: ${esc(s.disagreementReason)}</p>`}
+      <p>${esc(s.arc)}</p>
+      <p><b>Next step:</b> ${esc(s.nextStep)}</p>
+      <p class="hint">AI · ${esc(fmtDate(s.generatedAt))} · based on ${s.basedOnEncounters} meetings${stale ? ' · new meeting since this summary' : ''}</p>
+    </div>` : '';
+  const showButton = !s || stale;
+  box.innerHTML = `${summaryHtml}${showButton ? `<button class="btn" id="ai-btn" data-needs-net>${s ? 'Regenerate AI summary' : 'AI summary'}</button>
+    <span class="needs-net-hint" hidden>Needs connection</span>` : ''}<p class="error" id="ai-err" hidden></p>`;
+  const btn = box.querySelector('#ai-btn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.textContent = 'Thinking…';
+    const r = await aiArc(store.settings().geminiKey, {
+      person: { name: person.name, company: person.company, title: person.title },
+      encounters: encounters.map((e) => ({ date: e.date, event: e.event, name: e.nameAsEntered, company: e.company, title: e.title, temperature: e.temperature, note: e.note })),
+      rules: { label: signal.label, reasons: signal.reasons },
+    });
+    const err = box.querySelector('#ai-err');
+    const check = r.ok ? validateArc(r.result) : null;
+    if (!r.ok || !check.ok) {
+      err.textContent = r.ok ? "The AI's answer didn't make sense: try again." : r.message;
+      err.hidden = false;
+      btn.disabled = false;
+      btn.textContent = s ? 'Regenerate AI summary' : 'AI summary';
+      return;
+    }
+    store.setAiSummary(person.id, { ...r.result, generatedAt: ctx.today, basedOnEncounters: encounters.length, model: r.model });
+    renderAi(box, ctx, person, encounters, signal);
     ctx.applyNet();
   });
 }
