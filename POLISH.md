@@ -59,3 +59,18 @@ added, list it in `sw.js` SHELL and bump `CACHE`.
 
 Note (not a change): status not syncing between a laptop and a phone is expected:
 localStorage is per browser and there is no team sync (next-week item #1).
+
+## 10. "Saved" confirmation, impossible to miss
+- A big green banner at the top: `✓ Saved: Dana Levi`, visible for about 2 seconds.
+- A short vibration on phones that support it (`navigator.vibrate`, silently skipped elsewhere).
+- The existing line under the form ("added to … history · Open contact") stays.
+
+## 11. Grouped event picker on Capture
+- Instead of one long list, in this order:
+  1. `Other event…` at the very top (quick to reach).
+  2. **My events**: events assigned to me (Settings name).
+  3. **Happening soon**: starting in the next 30 days.
+  4. **All events**: every event.
+- Don't hide anything: without team sync, a reassignment made on another device won't reach
+  this phone, so every event stays in "All events" even when it also appears above.
+- The preselected event (today's, or the next one) is still preselected.
