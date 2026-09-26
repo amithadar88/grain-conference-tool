@@ -26,28 +26,39 @@ if (existsSync(new URL('sw.js', root))) {
     t.eq(jsFiles.filter((f) => !shell.includes(f)), [], 'app files not in SHELL');
   });
 
-  // Run sw.js in a fake browser: one request with the network down, one with it up.
-  const swFetch = async (networkUp) => {
+  // Run sw.js in a fake browser.
+  const runSw = (networkUp) => {
     const listeners = {};
+    const calls = [];
     const saved = new Response('{"saved":true}', { headers: { 'content-type': 'application/json' } });
     const cache = { match: async () => saved.clone(), put: async () => {}, addAll: async () => {} };
     vm.runInNewContext(readFileSync(new URL('sw.js', root), 'utf8'), {
-      self: { addEventListener: (type, fn) => { listeners[type] = fn; }, location: { origin: 'https://grain.test' }, skipWaiting() {}, clients: { claim() {} } },
-      caches: { open: async () => cache, keys: async () => [] },
+      self: {
+        addEventListener: (type, fn) => { listeners[type] = fn; }, location: { origin: 'https://grain.test' },
+        skipWaiting: () => { calls.push('skipWaiting'); }, clients: { claim: () => { calls.push('claim'); } },
+      },
+      caches: { open: async () => cache, keys: async () => ['grain-v1', 'grain-old', 'keep-me-not'], delete: async (k) => { calls.push(`delete ${k}`); } },
       fetch: async () => { if (!networkUp) throw new TypeError('Failed to fetch'); return new Response('{"fresh":true}'); },
       URL, Response, Headers, Promise, setTimeout, clearTimeout,
     });
-    let answer;
-    listeners.fetch({ request: { method: 'GET', url: 'https://grain.test/data/conferences.json', mode: 'cors' }, respondWith: (p) => { answer = p; } });
-    const res = await answer;
-    return { mark: res.headers.get('x-grain-saved-copy'), body: await res.text() };
+    const lifecycle = async (type) => { let p; listeners[type]({ waitUntil: (x) => { p = x; } }); await p; };
+    const get = async () => {
+      let answer;
+      listeners.fetch({ request: { method: 'GET', url: 'https://grain.test/data/conferences.json', mode: 'cors' }, respondWith: (p) => { answer = p; } });
+      return (await answer).text();
+    };
+    return { calls, lifecycle, get };
   };
-  const [down, up] = [await swFetch(false), await swFetch(true)];
-  t.test('sw.js: network down -> the saved copy is served, marked as the saved copy', () => {
-    t.eq(down, { mark: '1', body: '{"saved":true}' });
+  const down = runSw(false);
+  const up = runSw(true);
+  const [downBody, upBody] = [await down.get(), await up.get()];
+  await up.lifecycle('install');
+  await up.lifecycle('activate');
+  t.test('sw.js: network first; the saved copy only when the network fails', () => {
+    t.eq([upBody, downBody], ['{"fresh":true}', '{"saved":true}']);
   });
-  t.test('sw.js: network up -> the fresh answer, not marked', () => {
-    t.eq(up, { mark: null, body: '{"fresh":true}' });
+  t.test('sw.js: a new version takes over at once (skipWaiting + clients.claim) and drops old caches', () => {
+    t.eq([up.calls.includes('skipWaiting'), up.calls.includes('claim'), up.calls.filter((c) => c.startsWith('delete')).length], [true, true, 3]);
   });
 }
 

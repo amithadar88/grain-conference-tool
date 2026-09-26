@@ -14,14 +14,34 @@ const TAB_OF = { add: 'events' }; // sub-pages highlight their parent tab
 const viewEl = document.getElementById('view');
 const netEl = document.getElementById('net');
 
-// True when this load came from the saved copy because the network failed (sw.js marks those
-// answers). Some browsers keep claiming "online" then, so the banner can't rely on navigator.onLine.
-let savedCopy = false;
+// Can we actually reach the server? navigator.onLine alone isn't enough: after a reload with
+// DevTools "Offline" (and on some captive Wi-Fi) Chrome keeps saying "online" while every request
+// fails, and the saved copy still opens the app. A HEAD request with no-store skips both the
+// service worker (it only answers GETs) and the browser cache, so it really goes to the network.
+let reachable = true;
+let recheck = null;
+async function checkNetwork() {
+  clearTimeout(recheck);
+  if (navigator.onLine) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      await fetch('index.html', { method: 'HEAD', cache: 'no-store', signal: ctrl.signal });
+      reachable = true;
+    } catch {
+      reachable = false;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  applyNet();
+  if (!navigator.onLine || !reachable) recheck = setTimeout(checkNetwork, 15000); // no "online" event may come
+}
 
 // Buttons that need a connection carry data-needs-net. Toggle them without re-rendering,
 // so a flaky connection never wipes what the rep is typing.
 function applyNet() {
-  const online = navigator.onLine && !savedCopy;
+  const online = navigator.onLine && reachable;
   netEl.hidden = online;
   document.querySelectorAll('[data-needs-net]').forEach((b) => {
     b.disabled = !online || b.dataset.blocked === 'true';
@@ -30,20 +50,9 @@ function applyNet() {
   document.querySelectorAll('.needs-net-hint').forEach((h) => { h.hidden = online; });
 }
 
-// On the saved copy: every 15 s, check whether the network is back (no "online" event may come).
-function watchForNetwork() {
-  const timer = setInterval(async () => {
-    try {
-      const r = await fetch('data/conferences.json', { cache: 'no-store' });
-      if (r.headers.get('x-grain-saved-copy') !== '1') { savedCopy = false; clearInterval(timer); applyNet(); }
-    } catch { /* still offline */ }
-  }, 15000);
-}
-
 async function loadSeed() {
   const get = async (p) => {
     const r = await fetch(p);
-    if (r.headers.get('x-grain-saved-copy') === '1') savedCopy = true;
     if (!r.ok) throw new Error(`${p}: ${r.status}`);
     return r.json();
   };
@@ -77,10 +86,10 @@ async function boot() {
     location.replace(`#${runningToday(store.conferences(), ctx.today) ? 'capture' : 'events'}`);
   }
   window.addEventListener('hashchange', () => render(ctx));
-  window.addEventListener('online', () => { savedCopy = false; applyNet(); });
-  window.addEventListener('offline', applyNet);
+  window.addEventListener('online', checkNetwork);
+  window.addEventListener('offline', () => { reachable = false; checkNetwork(); });
   render(ctx);
-  if (savedCopy) watchForNetwork();
+  checkNetwork();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
