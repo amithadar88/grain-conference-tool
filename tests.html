@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grain Conference Tool: tests</title>
+  <style>
+    body { font: 15px/1.45 system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; }
+    h2 { font-size: 1rem; margin: 1.2rem 0 .3rem; }
+    ul { margin: 0; padding-left: 18px; }
+    .ok { color: #137333; }
+    .fail { color: #b3261e; font-weight: 600; }
+    .err { color: #b3261e; font-size: .85rem; font-weight: 400; display: block; }
+    #summary { font-size: 1.2rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Tests</h1>
+  <p id="summary">Running…</p>
+  <div id="out"></div>
+  <script type="module">
+    import { createRunner } from './tests/runner.js';
+    import { runAll } from './tests/all.js';
+
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const summary = document.getElementById('summary');
+    try {
+      const get = (p) => fetch(p, { cache: 'no-store' }).then((r) => r.json());
+      const [conferences, contacts] = await Promise.all([get('data/conferences.json'), get('data/contacts.json')]);
+      const { t, results } = createRunner();
+      runAll(t, { conferences, contacts });
+      const failed = results.filter((r) => !r.ok).length;
+      summary.textContent = `${results.length - failed}/${results.length} passed`;
+      summary.className = failed ? 'fail' : 'ok';
+      const groups = [...new Set(results.map((r) => r.group))];
+      document.getElementById('out').innerHTML = groups.map((g) => `<h2>${esc(g)}</h2><ul>${results.filter((r) => r.group === g).map((r) =>
+        `<li class="${r.ok ? 'ok' : 'fail'}">${r.ok ? '✓' : '✗'} ${esc(r.name)}${r.ok ? '' : `<span class="err">${esc(r.error)}</span>`}</li>`).join('')}</ul>`).join('');
+    } catch (e) {
+      summary.textContent = `Tests could not run: ${e.message}`;
+      summary.className = 'fail';
+    }
+  </script>
+</body>
+</html>
