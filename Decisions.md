@@ -1,4 +1,4 @@
-# Decisions & Talking Points
+# Decisions & Talking Points (for the video)
 
 ## 1. Scoring: why this model
 
@@ -23,8 +23,22 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
 - **Cluster bonus (+5):** another strong event (base score 55+) in the same region within
   7 days. Checked on the base score so events don't boost each other in a loop.
 - **Tiers come with actions, not just rankings:**
-  A 75+ must attend / B 55-74 attend if it clusters or budget allows /
-  C 40-54 monitor / D <40 skip.
+  A+ 90+ Must attend / A 75-89 Top priority / B 55-74 Attend if it clusters or budget
+  allows / C 40-54 Monitor / D <40 Skip.
+- **Why five tiers (a decision made while reviewing the results):** with a single A tier,
+  12 of 33 events were "must attend", which is more than a ~25-person company can cover.
+  Splitting it gives 3 real must-attends (Money20/20 Europe 98, EuroFinance 95,
+  PAY360 90) and 9 "Top priority". Note: PAY360 reaches 90 thanks to the cluster bonus
+  (base 85 + IFGS in London the week before): "must" can come from logistics, not only
+  quality, and I think that's right: one flight, two events.
+- **Pros / Cons / Biggest drag on every event (my idea during review):** a letter
+  hides the reason. Money20/20 USA's card says right away: great audience, top meeting
+  program, but 15 hours away (Travel -10 pts). A manager planning a US push can still go:
+  a conscious decision, not blind obedience to a letter.
+  Generated from the existing ratings by a simple rule, **not by AI**: transparent,
+  consistent, free. Same principle as everywhere: AI only where rules can't do the job.
+- **"Borderline" label** within 3 points of a threshold: 73 and 75 are practically the
+  same score, and the tool says so.
 - [if built] **Weights are adjustable (sliders):** there's no single right answer, so the
   tool ships a smart default the team can tune.
 
@@ -41,16 +55,92 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
 - Medium: Dubai, Singapore (growing hubs, worth testing)
 - Explore: LatAm / emerging markets (high FX pain, harder to serve)
 - **Evidence Grain is active in Europe + US:** ITB Berlin, Fintech Meetup, treasuryXL
-  partnership (NL), Madrid travel pitch day.
+  partnership (NL), Madrid travel pitch day, and Grain's Commercial Director Airlines &
+  Travel spoke at the Airline & Travel Payments B2B Summit (London, Feb 2026).
 
-### Sanity checks (verify with the real numbers once data is in)
-- Money20/20 Europe -> Tier A
-- Huge general tech conference -> borderline B/C (size doesn't make up for low ICP density)
+### The formula, step by step
+1. Each event gets five ratings, 1-5, each with a one-line reason.
+   Audience size is rated automatically by thresholds that grow ~2-3x per step
+   (<1,500 = 1 / 1,500-4,000 = 2 / 4,000-10,000 = 3 / 10,000-30,000 = 4 / 30,000+ = 5),
+   which is what "diminishing returns" means in practice.
+2. Each rating becomes a share of its weight: points = weight x (rating - 1) / 4.
+   **Audience size is the exception:** its points are multiplied by the ICP share, so
+   size only counts as much as the room is relevant.
+   Why (rating - 1) / 4 and not rating / 5: so a 1 is worth zero and a 5 the full weight.
+   Otherwise an event rated 1 on everything would still get 20 points.
+3. Base score = sum of the five. **65% of it comes from who is in the room**
+   (ICP 35 + Buyer access 30); size adds at most 10, and only for relevant rooms.
+4. +5 cluster bonus, capped at 100. Round to a whole number, then assign the tier.
+
+### Worked examples (the video's best 30 seconds)
+| Event | ICP | Buyer | Market | Size | Travel | Score |
+|---|---|---|---|---|---|---|
+| IAMTN Summit (300 people) | 5 -> 35 | 4 -> 22.5 | 4 -> 11.25 | 1 -> 0 | 4 -> 7.5 | **76, A** |
+| CES (140,000 people) | 1 -> 0 | 1 -> 0 | 3 -> 7.5 | 5 -> 10 x 0 = 0 | 1 -> 0 | **8, D** |
+- **300 of the right people beat 140,000 of the wrong ones.**
+- MPE: base 82.5, +5 because ITB Berlin is 5 days later in the same city -> 88.
+
+### Sanity checks (all pass with the real data)
+- Money20/20 Europe -> Tier A (98, the top of the list)
+- Web Summit, a huge general tech conference -> D (39): size doesn't make up for low
+  ICP density
+- CES, the biggest event in the list -> D (8)
 
 ### Time window
 - Rolling 12 months (Oct 2026 - Sep 2027), because that's how a team actually plans.
 - 2027 events without announced dates get an estimated date from prior years, clearly
   marked "estimated" in the UI.
+
+### Why size is multiplied by ICP (a decision made while reviewing the results)
+- The question I asked myself: is a bigger conference automatically better?
+- In the first version, size always added points: CES got the full 10 size points for
+  140,000 people who are almost all irrelevant to Grain. That's not how a salesperson
+  thinks. The real question is "how many relevant people can I meet", not "how many
+  people are there".
+- Fix: size points x ICP share. Big relevant rooms (ITB Berlin, WTM) barely move; small
+  focused rooms don't move at all; only big unfocused events drop
+  (Web Summit C -> D, Sibos B -> C, ITB Asia B -> C).
+- Options I rejected: keeping it (logically wrong), or dropping size entirely (misses
+  that ITB's 97,000 travel people really do mean more relevant meetings).
+- Trade-off I accept: **Money20/20 USA drops from exactly 75 (A) to 73 (B).** Defensible:
+  15 hours from Tel Aviv, with the room diluted by banks and retail. B means "go if it
+  clusters or budget allows", not "irrelevant". Its European twin scores 98.
+- What it taught me: 73 and 75 are practically the same score, but the tier letter makes
+  them look different. The tool flags events within 3 points of a threshold as
+  "Borderline", so the rep knows where judgment is needed.
+
+### Clusters the model surfaced on its own
+- **Berlin in March:** MPE (payments) + DACT Treasury Fair (Amsterdam) + ITB Berlin
+  (travel), all within ~10 days.
+- **Dubai in May:** three B events in two weeks. None justifies a flight alone;
+  together they do. That's exactly what "B = attend if it clusters" means.
+- **Florida in November:** Phocuswright and CrossTech World run on the same dates,
+  ~40 min apart: split the team instead of choosing.
+- **Gaps:** no A/B events in December, July or August; no A events in Asia.
+
+## 1b. How the conference list was built (and what it taught me)
+- **First pass:** Claude researched ~27 real events with web search in about 30 minutes,
+  each with dates, size and a reason for every rating.
+- **The miss:** I found the IAMTN Summit myself: ~300 people, almost all cross-border
+  payment companies, scored Tier A. The AI search had missed it.
+- **Why it was missed:** broad searches ("fintech conferences 2027") surface big,
+  heavily covered events. Small niche events, which are often the most relevant for a
+  focused ICP, barely show up.
+- **The fix:** a second, targeted pass by niche (cross-border/remittance, FX, travel
+  payments, European treasury). It found 5 more relevant events, including one where
+  Grain itself was on stage in 2026.
+- **Two identity traps along the way:**
+  - "IMTC" turned out to be two different things: an academic marketing conference with
+    the same acronym, and the cross-border payments conference I was actually looking for.
+  - The real one had **rebranded** from IMTC to CrossTech in 2022, which is why it was
+    invisible under its old name.
+  - Same name, different entity; different name, same entity. That's exactly the
+    problem the contact matching has to solve (two people named Dana Levi; one person
+    who changed companies). It's why the tool never merges on name alone.
+- **Takeaway for the product:** completeness isn't the goal of a sample list, but a
+  missed Tier A event is costly, and salespeople hear about new events all the time.
+  So the tool has **"Add conference with AI"** (section 3b): the rep pastes a link, the AI
+  drafts the ratings, the rep decides. Suggest, not decide.
 
 ## 2. Cross-conference tracking: edge cases
 
@@ -62,6 +152,26 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
    - Yes -> link the records and log a **job change** on the timeline.
      Moving up in seniority = positive signal.
    - No -> keep separate, and **don't ask again** for this pair.
+
+### Demo data: one person per edge case (all fictional)
+- Warming (Dana Levi): general interest -> volumes -> demo + pricing; promoted to VP.
+- Tire-kicker (Mark Thompson): 4 friendly meetings in 12 months, never shares volumes,
+  never books a call.
+- Job change linked by LinkedIn (Jonathan -> "Jon" Cohen): new company, new email,
+  now owns the FX budget.
+- Job change with no shared identifier (Sarah Mizrahi): the tool asks carefully.
+- Same name, different people (two David Cohens): the rep said "not the same", so the
+  tool never asks again.
+- Accents + suffix (José García / Jose Garcia, "S.L."): high-confidence suggestion.
+- Email beats name (Katarzyna / "Kasia" Nowak): auto-linked.
+- Cooling (Tom Becker): hot -> warm -> cold, lost to the bank's FX desk; renewal in
+  Jan 2027 = when to come back.
+- **Rules vs. AI (Ahmed Hassan):** rep logged "warm" in a rush, so rules say "Steady",
+  but the note asks for a proposal before end of Q3. The AI flags "act now" and explains
+  why. This is the clearest demo of why the AI is there.
+- Single meeting (Priya Raman): hot, but no nudge. Nudges start from the 2nd meeting.
+- Companies are invented on purpose: fictional people at real companies would look
+  like real Grain deals.
 
 ### Normalization
 - Name variations: Jon/Jonathan, Mike/Michael, accents, casing
@@ -77,7 +187,7 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
   trend, concrete asks, seniority change) give a baseline label; AI reads the notes
   (see section 3).
 
-## 3. The AI feature: why this one, and why AI
+## 3. Main AI feature: relationship-arc summary (why this one, and why AI)
 
 **Feature:** a relationship-arc summary for repeat contacts: warming relationship worth
 closing, or polite tire-kicker?
@@ -111,6 +221,25 @@ closing, or polite tire-kicker?
   paid tier. The model provider lives in one file, so the swap is small.
 - Built with Claude, runs on Gemini: picking the right tool per job.
 
+## 3b. Second AI feature: add a conference from a link
+- **Flow:** the rep enters name, dates and link. The AI reads the event's website and
+  drafts location, size, verticals and all 5 ratings, each with a reason. The rep sees
+  the score, tier and Pros / Cons / Biggest drag, edits anything, and confirms.
+  Nothing is saved without a human confirming it.
+- **Why AI is the right tool:** judging who attends an event from its website
+  (speaker list, agenda, "who should attend") is reading and interpreting messy text.
+  No rule can do that; a language model can.
+- **Why a human still confirms:** the AI can't know the niche the way the team does
+  (see 1b: the AI search missed the most relevant events). The AI saves the typing and
+  the research; the rep owns the judgment.
+- **Consistency:** the prompt includes Grain's ICP, the rating rubric and three events
+  I already rated (IAMTN, CES, Money20/20 Europe) as calibration examples, so a new event
+  is rated on the same scale as the rest.
+- **Guardrails:** output is validated (ratings 1-5, known regions); if the site can't be
+  read, the rep pastes a description or rates manually; duplicate warning if the event
+  looks like one already in the list (same entity-matching idea as contacts).
+- **Trade-off:** added entries live in the rep's browser only (no team sync yet).
+
 ## 4. Tech trade-offs
 - **No build step, free tools only,** so a non-developer can host and update it.
 - **Keys never in code:** Netlify environment variables or the in-app Settings page.
@@ -140,14 +269,16 @@ closing, or polite tire-kicker?
   HubSpot test account.
 
 ## 5. Scope: how I cut
-- All 7 required features are explicit requirements, so I **cut depth, not features.**
+- All required features are explicit requirements, so I **cut depth, not features.**
+- One addition beyond the brief: "Add conference with AI" (3b). I placed it after the
+  required items in the build order, so it can't endanger them.
   A missing feature looks worse than a simple one.
 - Each feature has a defined minimum version; if one runs past ~45 minutes, I ship the
   thin version and move on.
 - Build order keeps the tool working end-to-end after every step, so there's always
   something shippable.
 - Deferred to bonus: weight sliders, business-card scan / voice note, AI follow-up email,
-  AI conference discovery, HubSpot Company association.
+  AI conference discovery by niche, HubSpot Company association.
 - Out of scope: login, team sync, calendar integration, budget tracking.
 
 ## 6. Questions I sent Grain (and my assumptions)
@@ -165,9 +296,11 @@ closing, or polite tire-kicker?
 2. **History bonus:** score events by the pipeline they actually produced for Grain.
 3. **Cost factor:** ticket/booth cost in the scoring.
 4. **HubSpot Company association** + pulling existing HubSpot contacts into matching.
-5. **Paid AI tier** before using real customer data.
-6. [bonus items I didn't get to: sliders / card scan / follow-up email / AI discovery]
-7. Calendar integration, login.
+5. **AI conference discovery by niche** (see section 1b): the AI proactively suggests
+   events we don't know about; the "add from link" flow then rates them.
+6. **Paid AI tier** before using real customer data.
+7. [bonus items I didn't get to: sliders / card scan / follow-up email]
+8. Calendar integration, login.
 
 ## 8. How I used AI tools
 - See AI_LOG.md

@@ -1,0 +1,1318 @@
+{
+  "generated": "2026-09-25",
+  "window": "Sep 2026 - Sep 2027",
+  "conferences": [
+    {
+      "id": "sibos-2026",
+      "name": "Sibos 2026",
+      "startDate": "2026-09-28",
+      "endDate": "2026-10-01",
+      "dateStatus": "confirmed",
+      "city": "Miami",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "banking",
+        "payments",
+        "cross-border"
+      ],
+      "audienceSize": 10000,
+      "audienceSizeSource": "approx",
+      "description": "Swift's annual financial services conference. First-ever Miami edition.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "Cross-border payments is a core theme, but the room is dominated by large banks and market infrastructure, not mid-market PSPs"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Very senior banking executives; meetings are possible but mostly bank-to-bank"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Global audience; this edition is in the US for the first time"
+        },
+        "audienceSize": {
+          "score": 4,
+          "why": "10,000-30,000 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~12-13h), costly; worth it mainly when clustered"
+        }
+      },
+      "website": "https://www.sibos.com"
+    },
+    {
+      "id": "iamtn-summit-2026",
+      "name": "IAMTN Annual Summit 2026",
+      "startDate": "2026-10-14",
+      "endDate": "2026-10-15",
+      "dateStatus": "confirmed",
+      "city": "London",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "payments",
+        "cross-border"
+      ],
+      "audienceSize": 300,
+      "audienceSizeSource": "reported",
+      "description": "Annual summit of the International Association of Money Transfer Networks.",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "Money transfer operators and cross-border payment companies: the densest ICP room in the list"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Small room with CEO-level speakers (Remitly, Wise, Nium, Verto, dLocal); everyone is reachable, though there's no formal matchmaking"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "Global cross-border players, held in London"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "website": "https://www.iamtn.events",
+      "notes": "Only ~300 attendees, but almost all of them are ICP. The site also mentions Dubai (earlier editions were there); venue details point to London."
+    },
+    {
+      "id": "money2020-usa-2026",
+      "name": "Money20/20 USA",
+      "startDate": "2026-10-18",
+      "endDate": "2026-10-21",
+      "dateStatus": "confirmed",
+      "city": "Las Vegas",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "payments",
+        "fintech"
+      ],
+      "audienceSize": 10000,
+      "audienceSizeSource": "reported",
+      "description": "The flagship US fintech and payments show.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Payments-heavy audience with many PSPs and cross-border players, diluted by banks and retail"
+        },
+        "buyerAccess": {
+          "score": 5,
+          "why": "Senior audience plus the SmartMeet meeting program for pre-booked 1:1s"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "Mostly US market, a high-priority region"
+        },
+        "audienceSize": {
+          "score": 4,
+          "why": "10,000-30,000 attendees"
+        },
+        "travelEffort": {
+          "score": 1,
+          "why": "Long-haul with a connection (15h+), most expensive trip"
+        }
+      },
+      "website": "https://us.money2020.com"
+    },
+    {
+      "id": "itb-asia-2026",
+      "name": "ITB Asia 2026",
+      "startDate": "2026-10-21",
+      "endDate": "2026-10-23",
+      "dateStatus": "estimated",
+      "city": "Singapore",
+      "country": "Singapore",
+      "region": "Asia-Pacific",
+      "verticals": [
+        "travel"
+      ],
+      "audienceSize": 12000,
+      "audienceSizeSource": "approx",
+      "description": "Asia's main travel trade show, sister event of ITB Berlin.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Travel trade: OTAs, wholesalers, DMCs and hotel groups, all with FX exposure"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Trade show format with buyer programs, mixed seniority"
+        },
+        "audienceMarket": {
+          "score": 2,
+          "why": "Asia-Pacific audience, a region Grain is only testing"
+        },
+        "audienceSize": {
+          "score": 4,
+          "why": "10,000-30,000 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~11h), expensive"
+        }
+      },
+      "notes": "Dates estimated from prior years (late October)."
+    },
+    {
+      "id": "wtm-london-2026",
+      "name": "WTM London",
+      "startDate": "2026-11-03",
+      "endDate": "2026-11-05",
+      "dateStatus": "confirmed",
+      "city": "London",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "travel"
+      ],
+      "audienceSize": 46000,
+      "audienceSizeSource": "reported",
+      "description": "One of the two biggest global travel trade shows.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Tour operators, wholesalers and bedbanks, core travel ICP"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "34,000+ pre-scheduled meetings and a hosted buyer program"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "UK and European travel trade, Grain's home market"
+        },
+        "audienceSize": {
+          "score": 5,
+          "why": "30,000+ attendees (diminishing returns)"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "website": "https://www.wtm.com/london/en-gb.html"
+    },
+    {
+      "id": "afp-2026",
+      "name": "AFP 2026 Finance & Treasury Conference",
+      "startDate": "2026-11-08",
+      "endDate": "2026-11-11",
+      "dateStatus": "confirmed",
+      "city": "Las Vegas",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "treasury"
+      ],
+      "audienceSize": 7000,
+      "audienceSizeSource": "reported",
+      "description": "The largest treasury and finance conference in North America.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Corporate treasury and finance teams, the people who own FX risk"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Practitioner decision-makers; large exhibit hall, but no formal matchmaking"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "US corporates, a high-priority region"
+        },
+        "audienceSize": {
+          "score": 3,
+          "why": "4,000-10,000 attendees"
+        },
+        "travelEffort": {
+          "score": 1,
+          "why": "Long-haul with a connection (15h+), most expensive trip"
+        }
+      },
+      "website": "https://www.financialprofessionals.org"
+    },
+    {
+      "id": "web-summit-2026",
+      "name": "Web Summit 2026",
+      "startDate": "2026-11-09",
+      "endDate": "2026-11-12",
+      "dateStatus": "confirmed",
+      "city": "Lisbon",
+      "country": "Portugal",
+      "region": "Europe",
+      "verticals": [
+        "general-tech",
+        "saas"
+      ],
+      "audienceSize": 70000,
+      "audienceSizeSource": "reported",
+      "description": "One of the world's largest general tech conferences.",
+      "ratings": {
+        "icpFit": {
+          "score": 2,
+          "why": "Generalist tech crowd; fintech is one track of 20+"
+        },
+        "buyerAccess": {
+          "score": 2,
+          "why": "Very large and unfocused; hard to find FX decision-makers"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Global audience with European weighting"
+        },
+        "audienceSize": {
+          "score": 5,
+          "why": "30,000+ attendees (diminishing returns)"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "website": "https://websummit.com",
+      "notes": "Sanity check: huge size doesn't make up for low ICP density."
+    },
+    {
+      "id": "phocuswright-2026",
+      "name": "The Phocuswright Conference",
+      "startDate": "2026-11-17",
+      "endDate": "2026-11-19",
+      "dateStatus": "confirmed",
+      "city": "Fort Lauderdale",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "travel"
+      ],
+      "audienceSize": 2000,
+      "audienceSizeSource": "approx",
+      "description": "Senior travel industry and travel-tech leadership conference.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Senior travel industry: OTAs, travel management companies, suppliers"
+        },
+        "buyerAccess": {
+          "score": 5,
+          "why": "C-level heavy, with structured 1:1 networking and roundtables"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Mostly North American travel industry"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~12-13h), costly; worth it mainly when clustered"
+        }
+      },
+      "website": "https://www.phocuswrightconference.com"
+    },
+    {
+      "id": "sff-2026",
+      "name": "Singapore FinTech Festival",
+      "startDate": "2026-11-18",
+      "endDate": "2026-11-20",
+      "dateStatus": "confirmed",
+      "city": "Singapore",
+      "country": "Singapore",
+      "region": "Asia-Pacific",
+      "verticals": [
+        "fintech",
+        "banking"
+      ],
+      "audienceSize": 70000,
+      "audienceSizeSource": "reported",
+      "description": "Asia's largest fintech gathering, organized with the Monetary Authority of Singapore.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "Broad fintech and policy audience; payments present but diluted"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Huge festival format; senior people attend, but are hard to reach"
+        },
+        "audienceMarket": {
+          "score": 2,
+          "why": "Asia-centric audience"
+        },
+        "audienceSize": {
+          "score": 5,
+          "why": "30,000+ attendees (diminishing returns)"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~11h), expensive"
+        }
+      }
+    },
+    {
+      "id": "ces-2027",
+      "name": "CES 2027",
+      "startDate": "2027-01-06",
+      "endDate": "2027-01-09",
+      "dateStatus": "estimated",
+      "city": "Las Vegas",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "general-tech"
+      ],
+      "audienceSize": 140000,
+      "audienceSizeSource": "approx",
+      "description": "Consumer technology mega-show.",
+      "ratings": {
+        "icpFit": {
+          "score": 1,
+          "why": "Consumer electronics; almost no FX or payments buyers"
+        },
+        "buyerAccess": {
+          "score": 1,
+          "why": "Enormous and unfocused for B2B fintech"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Global, US-heavy"
+        },
+        "audienceSize": {
+          "score": 5,
+          "why": "30,000+ attendees (diminishing returns)"
+        },
+        "travelEffort": {
+          "score": 1,
+          "why": "Long-haul with a connection (15h+), most expensive trip"
+        }
+      },
+      "notes": "Sanity check: the biggest event in the list, and still a clear skip. Dates estimated."
+    },
+    {
+      "id": "finovate-europe-2027",
+      "name": "FinovateEurope 2027",
+      "startDate": "2027-02-23",
+      "endDate": "2027-02-24",
+      "dateStatus": "estimated",
+      "city": "London",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "fintech",
+        "banking"
+      ],
+      "audienceSize": 1200,
+      "audienceSizeSource": "approx",
+      "description": "Demo-driven fintech conference for banks.",
+      "ratings": {
+        "icpFit": {
+          "score": 2,
+          "why": "Bank innovation teams watching vendor demos; few PSPs or FX-exposed businesses"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Bank innovation leads, rarely the budget owner for FX risk"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "UK and European banking audience"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "fintech-meetup-2027",
+      "name": "Fintech Meetup 2027",
+      "startDate": "2027-02-22",
+      "endDate": "2027-02-24",
+      "dateStatus": "confirmed",
+      "city": "Las Vegas",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "fintech",
+        "payments",
+        "banking"
+      ],
+      "audienceSize": 5000,
+      "audienceSizeSource": "reported",
+      "description": "Meetings-first US fintech event. Grain has attended before.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "US banks, credit unions and fintechs; some PSPs"
+        },
+        "buyerAccess": {
+          "score": 5,
+          "why": "50,000+ double opt-in 1:1 meetings; 1,000+ CEOs and founders"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "US market, a high-priority region"
+        },
+        "audienceSize": {
+          "score": 3,
+          "why": "4,000-10,000 attendees"
+        },
+        "travelEffort": {
+          "score": 1,
+          "why": "Long-haul with a connection (15h+), most expensive trip"
+        }
+      },
+      "website": "https://fintechmeetup.com"
+    },
+    {
+      "id": "mpe-2027",
+      "name": "MPE 2027 (Merchant Payments Ecosystem)",
+      "startDate": "2027-03-09",
+      "endDate": "2027-03-11",
+      "dateStatus": "confirmed",
+      "city": "Berlin",
+      "country": "Germany",
+      "region": "Europe",
+      "verticals": [
+        "payments"
+      ],
+      "audienceSize": 1600,
+      "audienceSizeSource": "reported",
+      "description": "Europe's leading merchant payments conference.",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "Merchants, acquirers and PSPs, the heart of Grain's ICP"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Senior, curated audience; small enough to actually meet people"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "European merchant payments market"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~4h flight from Tel Aviv"
+        }
+      },
+      "website": "https://www.merchantpaymentsecosystem.com",
+      "notes": "Clusters with ITB Berlin the following week: one trip, two events."
+    },
+    {
+      "id": "mrc-vegas-2027",
+      "name": "MRC Vegas 2027",
+      "startDate": "2027-03-15",
+      "endDate": "2027-03-18",
+      "dateStatus": "estimated",
+      "city": "Las Vegas",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "payments"
+      ],
+      "audienceSize": 2000,
+      "audienceSizeSource": "approx",
+      "description": "Merchant Risk Council's flagship payments and fraud conference.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "Merchant payments and fraud teams; PSPs present, FX is a side topic"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Mostly practitioners, mid to senior level"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "US-focused"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 1,
+          "why": "Long-haul with a connection (15h+), most expensive trip"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "itb-berlin-2027",
+      "name": "ITB Berlin 2027",
+      "startDate": "2027-03-16",
+      "endDate": "2027-03-18",
+      "dateStatus": "confirmed",
+      "city": "Berlin",
+      "country": "Germany",
+      "region": "Europe",
+      "verticals": [
+        "travel"
+      ],
+      "audienceSize": 97000,
+      "audienceSizeSource": "reported",
+      "description": "The world's leading travel trade show. Grain has attended before.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "The global travel trade: tour operators, wholesalers, bedbanks, DMCs"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Pure B2B show with appointment systems; decision-makers attend"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "Global, with a strong European core"
+        },
+        "audienceSize": {
+          "score": 5,
+          "why": "30,000+ attendees (diminishing returns)"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~4h flight from Tel Aviv"
+        }
+      },
+      "website": "https://www.itb.com/en/"
+    },
+    {
+      "id": "ifgs-2027",
+      "name": "Innovate Finance Global Summit 2027",
+      "startDate": "2027-04-13",
+      "endDate": "2027-04-14",
+      "dateStatus": "estimated",
+      "city": "London",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "fintech"
+      ],
+      "audienceSize": 2500,
+      "audienceSizeSource": "approx",
+      "description": "The UK fintech industry's annual summit.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "UK fintech ecosystem; mix of fintechs, investors and policy"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Founders and executives, but less deal-focused"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "UK and Europe"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "pay360-2027",
+      "name": "PAY360 2027",
+      "startDate": "2027-04-21",
+      "endDate": "2027-04-22",
+      "dateStatus": "confirmed",
+      "city": "London",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "payments"
+      ],
+      "audienceSize": 6000,
+      "audienceSizeSource": "reported",
+      "description": "Europe's largest payments-only exhibition, run by The Payments Association.",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "Payments-only audience: PSPs, EMIs, acquirers, cross-border players"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "51% of visitors are VP and above"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "UK and European payments market"
+        },
+        "audienceSize": {
+          "score": 3,
+          "why": "4,000-10,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      }
+    },
+    {
+      "id": "money2020-asia-2027",
+      "name": "Money20/20 Asia 2027",
+      "startDate": "2027-04-27",
+      "endDate": "2027-04-29",
+      "dateStatus": "confirmed",
+      "city": "Bangkok",
+      "country": "Thailand",
+      "region": "Asia-Pacific",
+      "verticals": [
+        "payments",
+        "fintech"
+      ],
+      "audienceSize": 4000,
+      "audienceSizeSource": "reported",
+      "description": "Money20/20's Asia edition.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Payments and fintech focused"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Senior audience with Money20/20's meeting tools"
+        },
+        "audienceMarket": {
+          "score": 2,
+          "why": "Asia-Pacific audience, a region Grain is only testing"
+        },
+        "audienceSize": {
+          "score": 3,
+          "why": "4,000-10,000 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~11h), expensive"
+        }
+      },
+      "website": "https://asia.money2020.com"
+    },
+    {
+      "id": "atm-2027",
+      "name": "Arabian Travel Market 2027",
+      "startDate": "2027-05-03",
+      "endDate": "2027-05-06",
+      "dateStatus": "estimated",
+      "city": "Dubai",
+      "country": "UAE",
+      "region": "Middle East",
+      "verticals": [
+        "travel"
+      ],
+      "audienceSize": 40000,
+      "audienceSizeSource": "approx",
+      "description": "The leading travel trade show in the Middle East.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Travel trade for the Middle East, both inbound and outbound"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Buyer programs exist, but it's a large show floor"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Middle East, a growing hub worth testing"
+        },
+        "audienceSize": {
+          "score": 5,
+          "why": "30,000+ attendees (diminishing returns)"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~3.5h flight; check regional travel advisories before booking"
+        }
+      },
+      "notes": "The 2026 edition was rescheduled; 2027 dates estimated from the usual early-May slot."
+    },
+    {
+      "id": "dubai-fintech-summit-2027",
+      "name": "Dubai FinTech Summit 2027",
+      "startDate": "2027-05-10",
+      "endDate": "2027-05-11",
+      "dateStatus": "estimated",
+      "city": "Dubai",
+      "country": "UAE",
+      "region": "Middle East",
+      "verticals": [
+        "fintech",
+        "banking"
+      ],
+      "audienceSize": 8000,
+      "audienceSizeSource": "approx",
+      "description": "Dubai's government-backed fintech summit.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "Broad fintech and banking audience"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Senior government and financial-institution leadership"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Middle East and GCC"
+        },
+        "audienceSize": {
+          "score": 3,
+          "why": "4,000-10,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~3.5h flight; check regional travel advisories before booking"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "act-annual-2027",
+      "name": "ACT Annual Conference 2027",
+      "startDate": "2027-05-19",
+      "endDate": "2027-05-20",
+      "dateStatus": "estimated",
+      "city": "UK (city TBC)",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "treasury"
+      ],
+      "audienceSize": 800,
+      "audienceSizeSource": "approx",
+      "description": "The Association of Corporate Treasurers' annual conference.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "UK corporate treasurers, who own FX exposure"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Treasurers themselves, the actual decision-makers"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "UK corporates"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "notes": "Dates and city estimated; the 2025 edition was 20-21 May in Wales, the same week as Finanzsymposium."
+    },
+    {
+      "id": "saastr-2027",
+      "name": "SaaStr Annual 2027",
+      "startDate": "2027-05-11",
+      "endDate": "2027-05-13",
+      "dateStatus": "estimated",
+      "city": "San Francisco Bay Area",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "saas"
+      ],
+      "audienceSize": 10000,
+      "audienceSizeSource": "approx",
+      "description": "The largest SaaS founder and go-to-market conference.",
+      "ratings": {
+        "icpFit": {
+          "score": 2,
+          "why": "SaaS founders and go-to-market teams; few have FX as a pain point"
+        },
+        "buyerAccess": {
+          "score": 2,
+          "why": "Founders attend, but aren't buying FX risk tools"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "US-focused"
+        },
+        "audienceSize": {
+          "score": 4,
+          "why": "10,000-30,000 attendees"
+        },
+        "travelEffort": {
+          "score": 1,
+          "why": "Long-haul with a connection (15h+), most expensive trip"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "seamless-me-2027",
+      "name": "Seamless Middle East 2027",
+      "startDate": "2027-05-18",
+      "endDate": "2027-05-20",
+      "dateStatus": "estimated",
+      "city": "Dubai",
+      "country": "UAE",
+      "region": "Middle East",
+      "verticals": [
+        "payments",
+        "fintech"
+      ],
+      "audienceSize": 10000,
+      "audienceSizeSource": "approx",
+      "description": "The Middle East's largest payments and e-commerce show.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Payments, e-commerce and PSPs across the MENA region"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Big exhibition, mixed seniority"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Middle East, a growing hub worth testing"
+        },
+        "audienceSize": {
+          "score": 4,
+          "why": "10,000-30,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~3.5h flight; check regional travel advisories before booking"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "money2020-europe-2027",
+      "name": "Money20/20 Europe 2027",
+      "startDate": "2027-06-08",
+      "endDate": "2027-06-10",
+      "dateStatus": "confirmed",
+      "city": "Amsterdam",
+      "country": "Netherlands",
+      "region": "Europe",
+      "verticals": [
+        "payments",
+        "fintech"
+      ],
+      "audienceSize": 7500,
+      "audienceSizeSource": "reported",
+      "description": "Europe's largest fintech gathering.",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "The densest room of European PSPs and payments companies"
+        },
+        "buyerAccess": {
+          "score": 5,
+          "why": "About 1 in 3 attendees is C-suite, plus a structured meeting program"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "European payments market"
+        },
+        "audienceSize": {
+          "score": 3,
+          "why": "4,000-10,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~4.5h flight from Tel Aviv"
+        }
+      },
+      "website": "https://europe.money2020.com",
+      "notes": "Sanity check: should land in Tier A."
+    },
+    {
+      "id": "phocuswright-europe-2027",
+      "name": "Phocuswright Europe 2027",
+      "startDate": "2027-06-14",
+      "endDate": "2027-06-16",
+      "dateStatus": "estimated",
+      "city": "Barcelona",
+      "country": "Spain",
+      "region": "Europe",
+      "verticals": [
+        "travel"
+      ],
+      "audienceSize": 1000,
+      "audienceSizeSource": "approx",
+      "description": "Phocuswright's European travel leadership conference.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Senior European travel executives"
+        },
+        "buyerAccess": {
+          "score": 5,
+          "why": "Built around 1:1 conversations with decision-makers"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "European travel industry"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~4.5h flight from Tel Aviv"
+        }
+      },
+      "website": "https://www.phocuswrighteurope.com",
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "traveltech-show-2027",
+      "name": "TravelTech Show 2027",
+      "startDate": "2027-06-23",
+      "endDate": "2027-06-24",
+      "dateStatus": "estimated",
+      "city": "London",
+      "country": "UK",
+      "region": "Europe",
+      "verticals": [
+        "travel",
+        "saas"
+      ],
+      "audienceSize": 3000,
+      "audienceSizeSource": "approx",
+      "description": "Europe's travel technology marketplace.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Travel companies actively sourcing technology, which is exactly how Grain sells"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Pre-booked 1-2-1 meetings between buyers and suppliers"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "European travel industry"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~5h flight from Tel Aviv"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "finovate-fall-2027",
+      "name": "FinovateFall 2027",
+      "startDate": "2027-09-08",
+      "endDate": "2027-09-10",
+      "dateStatus": "estimated",
+      "city": "New York",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "fintech",
+        "banking"
+      ],
+      "audienceSize": 1500,
+      "audienceSizeSource": "approx",
+      "description": "Demo-driven fintech conference for banks.",
+      "ratings": {
+        "icpFit": {
+          "score": 2,
+          "why": "Bank innovation teams watching vendor demos"
+        },
+        "buyerAccess": {
+          "score": 3,
+          "why": "Bank innovation leads, rarely the FX budget owner"
+        },
+        "audienceMarket": {
+          "score": 4,
+          "why": "US market"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~12-13h), costly; worth it mainly when clustered"
+        }
+      },
+      "notes": "Dates estimated from prior years."
+    },
+    {
+      "id": "eurofinance-2027",
+      "name": "EuroFinance International Treasury Management 2027",
+      "startDate": "2027-09-15",
+      "endDate": "2027-09-17",
+      "dateStatus": "estimated",
+      "city": "TBC",
+      "country": "TBC",
+      "region": "Europe",
+      "verticals": [
+        "treasury"
+      ],
+      "audienceSize": 2600,
+      "audienceSizeSource": "reported",
+      "description": "The world's largest corporate treasury event. treasuryXL (a Grain partner) promotes it.",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "Corporate treasurers of multinationals and mid-caps; FX exposure is a headline topic"
+        },
+        "buyerAccess": {
+          "score": 5,
+          "why": "67% in leadership roles, plus Treasury Match 1:1 meetings"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "European treasury community"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "European venue, short flight from Tel Aviv"
+        }
+      },
+      "website": "https://www.eurofinance.com",
+      "notes": "Dates and city estimated; the 2026 edition was in Barcelona in mid-September."
+    },
+    {
+      "id": "crosstech-world-2026",
+      "name": "CrossTech World 2026 (formerly IMTC World)",
+      "startDate": "2026-11-17",
+      "endDate": "2026-11-19",
+      "dateStatus": "confirmed",
+      "city": "Miami Beach",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "payments",
+        "cross-border"
+      ],
+      "audienceSize": 1000,
+      "audienceSizeSource": "approx",
+      "description": "The flagship cross-border payments event, run since 2009 under the IMTC name and rebranded in 2022.",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "Money transfer operators, remittance and FX firms, payment institutions: pure cross-border ICP"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Industry executives from 554 companies; a niche crowd where decision-makers are reachable"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Americas-heavy, with strong Latin America corridors"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~12-13h), costly; worth it mainly when clustered"
+        }
+      },
+      "website": "https://crosstechpayments.com/events/",
+      "notes": "Same dates as The Phocuswright Conference, ~40 min away: split the team rather than choose."
+    },
+    {
+      "id": "atps-b2b-2027",
+      "name": "Airline & Travel Payments B2B Summit 2027",
+      "startDate": "2027-02-16",
+      "endDate": "2027-02-17",
+      "dateStatus": "confirmed",
+      "city": "Miami",
+      "country": "USA",
+      "region": "North America",
+      "verticals": [
+        "travel",
+        "payments"
+      ],
+      "audienceSize": 100,
+      "audienceSizeSource": "reported",
+      "description": "Niche summit on B2B travel payments (virtual cards, reconciliation, FX management).",
+      "ratings": {
+        "icpFit": {
+          "score": 5,
+          "why": "Exactly where Grain's two ICPs meet: travel companies' payments teams, with FX hedging on the agenda"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Heads of payments from airlines, OTAs and TMCs in a room of ~100"
+        },
+        "audienceMarket": {
+          "score": 3,
+          "why": "Moved from London to Miami for 2027; likely a more Americas-heavy crowd"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 2,
+          "why": "Long-haul (~12-13h), costly; worth it mainly when clustered"
+        }
+      },
+      "website": "https://www.aiconnects.us/airline-travel-payments-b2b-summit-2027/",
+      "notes": "Grain's Commercial Director Airlines & Travel spoke at the 2026 London edition. Clusters with Fintech Meetup five days later."
+    },
+    {
+      "id": "dact-treasury-fair-2027",
+      "name": "DACT Treasury Fair 2027",
+      "startDate": "2027-03-11",
+      "endDate": "2027-03-12",
+      "dateStatus": "estimated",
+      "city": "Amsterdam",
+      "country": "Netherlands",
+      "region": "Europe",
+      "verticals": [
+        "treasury"
+      ],
+      "audienceSize": 800,
+      "audienceSizeSource": "approx",
+      "description": "The Dutch Association of Corporate Treasurers' annual fair.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "Dutch corporate treasurers, who own FX exposure"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Treasurers themselves, in a compact fair format"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "Netherlands, the home market of Grain's partner treasuryXL"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~4.5h flight from Tel Aviv"
+        }
+      },
+      "notes": "Dates estimated; the 2025 edition was 13-14 March in Amsterdam. Sits between MPE and ITB Berlin."
+    },
+    {
+      "id": "finanzsymposium-2027",
+      "name": "Finanzsymposium 2027",
+      "startDate": "2027-05-19",
+      "endDate": "2027-05-21",
+      "dateStatus": "estimated",
+      "city": "Mannheim",
+      "country": "Germany",
+      "region": "Europe",
+      "verticals": [
+        "treasury"
+      ],
+      "audienceSize": 2000,
+      "audienceSizeSource": "approx",
+      "description": "Europe's leading German-language treasury and financial management congress.",
+      "ratings": {
+        "icpFit": {
+          "score": 4,
+          "why": "German-speaking corporate treasury and finance leaders"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Treasury decision-makers; a congress built around them"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "DACH region, Europe's biggest industrial economy"
+        },
+        "audienceSize": {
+          "score": 2,
+          "why": "1,500-4,000 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "Direct ~4h flight from Tel Aviv"
+        }
+      },
+      "notes": "Dates estimated; the 2025 edition was 21-23 May in Mannheim."
+    },
+    {
+      "id": "tradetech-fx-2027",
+      "name": "TradeTech FX 2027",
+      "startDate": "2027-09-14",
+      "endDate": "2027-09-16",
+      "dateStatus": "estimated",
+      "city": "TBC",
+      "country": "TBC",
+      "region": "Europe",
+      "verticals": [
+        "fx",
+        "treasury"
+      ],
+      "audienceSize": 800,
+      "audienceSizeSource": "reported",
+      "description": "Europe's largest FX gathering, with a Corporate FX stage for treasurers and heads of FX risk.",
+      "ratings": {
+        "icpFit": {
+          "score": 3,
+          "why": "Europe's largest FX event; has a dedicated Corporate FX stage for treasurers, but most of the room is institutional (asset managers, funds)"
+        },
+        "buyerAccess": {
+          "score": 4,
+          "why": "Heads of FX risk and senior treasurers on the Corporate FX stage"
+        },
+        "audienceMarket": {
+          "score": 5,
+          "why": "European FX community"
+        },
+        "audienceSize": {
+          "score": 1,
+          "why": "Under 1,500 attendees"
+        },
+        "travelEffort": {
+          "score": 4,
+          "why": "European venue, short flight from Tel Aviv"
+        }
+      },
+      "website": "https://tradetechfx.wbresearch.com",
+      "notes": "Dates estimated; 2025 was mid-September in Barcelona, 2026 in Amsterdam. Same week as EuroFinance."
+    }
+  ]
+}

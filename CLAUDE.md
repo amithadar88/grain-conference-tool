@@ -39,6 +39,18 @@ phone, on a noisy show floor, often with bad Wi-Fi.
   (free-tier rate limits + stable output).
   Privacy note: free tier data may be used by Google; fine for synthetic demo data,
   production would use a paid tier. Model swap = one file.
+- **Second AI use: conference intake.** Same `ai.js` function (or a sibling). The
+  function fetches the event URL **server-side** (no CORS issue), strips it to plain text
+  (cap ~15k chars), and asks Gemini for a JSON draft: city, country, region
+  (Europe / North America / Middle East / Asia-Pacific), verticals, estimated audience size,
+  one-line description, and the 5 ratings (1-5) each with a one-line "why".
+  - The prompt includes Grain's ICP, the rating rubric below, and 3 already-rated events
+    from `data/conferences.json` as calibration examples (e.g. IAMTN, CES, Money20/20 Europe),
+    so AI ratings are consistent with the seed data.
+  - Validate the JSON (integers 1-5, region from the list); reject and show a clear error
+    otherwise.
+  - If the page can't be fetched or read: let the rep paste a description instead, or fill
+    the ratings manually. The AI is a helper, never a blocker.
 - **HubSpot: Netlify Function proxy** (`netlify/functions/hubspot.js`) because of CORS.
   Private-app token entered in Settings, sent per request, never stored server-side.
   Upsert by email (no duplicates). Contact only; company name stored as a text
@@ -57,14 +69,23 @@ Each factor rated 1-5 per conference, **each with a one-line rationale** shown i
 | ICP vertical fit | 35% | How much of the audience is PSPs / cross-border payments / travel / treasury |
 | Buyer access | 30% | Seniority of attendees + structured meeting formats (hosted buyer programs, meeting apps) |
 | Audience market fit | 15% | Where attendees come from (Europe/US/Israel-relevant), not where the venue is |
-| Audience size | 10% | Diminishing returns (log scale) |
+| Audience size | 10% | Diminishing returns (log scale), **multiplied by the ICP factor** |
 | Travel effort from Tel Aviv | 10% | 5 = easy/short, 1 = long-haul/expensive |
 
+- **Size only counts as much as the room is relevant:**
+  `sizePoints = weight_size * sizeFactor * icpFactor` (where factor = (rating - 1) / 4).
+  140,000 irrelevant people are worth nothing; a big relevant room keeps its size points.
 - Modifier: **+5 cluster bonus** if another event with base score >= 55 is in the same
   region within 7 days (check on base score to avoid circularity).
-- Tiers with actions: **A 75+** must attend / **B 55-74** attend if it clusters or budget
-  allows / **C 40-54** monitor / **D <40** skip.
+- Tiers with actions: **A+ 90+** Must attend / **A 75-89** Top priority /
+  **B 55-74** Attend if it clusters or budget allows / **C 40-54** Monitor / **D <40** Skip.
+- **Borderline** label when the final score is within 3 points of any tier threshold.
 - Principle: audience matters most; location mainly drives logistics and clustering.
+- **Round the final score to a whole number before assigning the tier** (floating point
+  otherwise turns 55.0 into 54.999 -> wrong tier).
+- Scores, tiers and cluster bonuses are **computed in the app** from the ratings in
+  `data/conferences.json`, never stored in the data file (so weight changes just work).
+- Regions for clustering: Europe (incl. UK), North America, Middle East, Asia-Pacific.
 
 ## Cross-conference contact tracking
 - Matching levels:
@@ -101,21 +122,30 @@ MVP:
 4. Repeat-contact matching + nudge at capture + contact view with the pattern
 5. AI relationship-arc summary
 6. HubSpot push (+ demo mode + CSV export)
-7. Settings: keys, team member names, reset demo data
+7. Add conference with AI: rep enters name, dates and link -> AI drafts location, size,
+   verticals and all 5 ratings with reasons -> rep sees the score, tier and
+   Pros / Cons / Biggest drag, edits anything, then confirms. Nothing is saved without
+   confirmation. Warn if the event looks like one already in the list (similar name or
+   same URL): same entity-matching idea as contacts. Mark it "AI-drafted, confirmed by <rep>".
+8. Settings: keys, team member names, reset demo data
 
 Bonus (in order, only if time allows):
 1. Weight sliders for scoring (auto-normalize + reset)
 2. Business-card photo / voice note -> AI fills lead fields (Gemini reads images)
 3. AI-drafted follow-up email
-4. AI conference discovery
+4. AI conference discovery by niche (AI suggests events we don't know about)
 
 Out of scope: login/auth, team sync, calendar integration, budget tracking.
 
 ## Minimum depth per MVP item (timebox)
-All 7 MVP items are explicit requirements in the brief, so **cut depth, not items**.
+All MVP items except #7 are explicit requirements; #7 is our second AI feature in the brief, so **cut depth, not items**.
 Rule: if an item runs past ~45 minutes, ship the thin version below and move on.
-1. List: one table/card list; filters for vertical, region, tier, month + text search;
-   score breakdown in an expandable row.
+1. List: one table/card list; filters for vertical, region, tier, month + text search.
+   Each event shows **Pros / Cons / Biggest drag**, derived from the ratings (no AI, no
+   manual writing): Pros = factors rated 4-5 with their "why"; Cons = factors rated 1-2
+   with their "why"; Biggest drag = the factor that lost the most points vs. its maximum
+   (e.g. "Travel (-10 pts)"). Plus a **"Borderline"** label when the score is within
+   3 points of a tier threshold. Goal: the rep sees *why*, and decides in context.
 2. Planning: 12 month columns with event cards colored by tier; cluster badge;
    a short "gaps" list above the grid (simple rules). No maps.
 3. Capture: one screen, 4 fields + "more" toggle for optional ones. Saving a lead
@@ -124,13 +154,25 @@ Rule: if an item runs past ~45 minutes, ship the thin version below and move on.
    contact view = a timeline list of encounters.
 5. AI: one prompt, one button, cached result.
 6. HubSpot: upsert contact only; demo mode; CSV export.
-7. Settings: one plain form.
+7. Add conference: one form (name, dates, link) -> one AI call -> review screen reusing
+   the event card from item 1. Manual fallback = the same review screen with empty ratings.
+8. Settings: one plain form.
 
 ## Data
 - `data/conferences.json`: ~30-40 real fintech/payments/travel/treasury/SaaS events
   (researched separately), with the 5 factor ratings + rationales.
-- `data/contacts.json`: synthetic demo contacts with deliberate edge cases
-  (name variations, job changes, warming vs tire-kicker patterns).
+- `data/contacts.json`: synthetic demo data (fictional people and companies, encounters
+  at past 2025-2026 editions of real conferences):
+  - `people`: one record per real person (fields = latest known; `_demoCase` and
+    `_expectedSignal` describe what each person demonstrates, use them to test).
+  - `encounters`: one row per meeting, exactly as the rep typed it (`nameAsEntered`,
+    company, title, note, temperature, rep). Job changes and name variants are visible
+    here; history is derived from encounters, never overwritten.
+  - `notSamePairs`: pairs the rep already said are different people (never ask again).
+  - `liveDemoScript`: names to type on the capture screen to trigger each nudge type.
+  - `team`: default rep names for Settings.
+- Capture screen preselects the conference happening today; if none, the next upcoming
+  one (demo-friendly). Always changeable in one tap.
 
 ## Open questions sent to Grain (assumptions until answered)
 - Conference presence: assume attendees with pre-booked meetings, not booths
