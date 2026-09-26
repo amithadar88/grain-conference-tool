@@ -2,6 +2,7 @@ import { esc, safeUrl, fmtRange } from '../js/views/ui.js';
 import { eventCardHTML, clusterBadge } from '../js/views/eventCard.js';
 import { scoreAll } from '../js/scoring.js';
 import { staffingChip } from '../js/views/plan.js';
+import { eventPickerGroups } from '../js/views/capture.js';
 
 export default function uiTests(t, data) {
   t.group('Display safety');
@@ -55,5 +56,23 @@ export default function uiTests(t, data) {
       { text: '🔗 +5 · same week as X', title: 'Cluster bonus +5: X is 1 day away, in the same region' },
       null,
     ]);
+  });
+
+  t.group('Capture: grouped event picker');
+
+  const confs = data.conferences.conferences;
+  const ids = (groups) => groups.map((g) => [g.label, g.label === 'All events' ? g.items.length : g.items.map((c) => c.id)]);
+
+  t.test('My events, then Happening soon (next 30 days), then All events', () => {
+    const plans = { 'wtm-london-2026': { rep: 'Maya' }, 'sibos-2026': { rep: 'Yoni' } };
+    t.eq(ids(eventPickerGroups(confs, (id) => plans[id] || {}, 'Maya', '2026-09-26')), [
+      ['My events', ['wtm-london-2026']],
+      ['Happening soon', ['sibos-2026', 'iamtn-summit-2026', 'money2020-usa-2026', 'itb-asia-2026']],
+      ['All events', confs.length],
+    ]);
+  });
+  t.test('Nothing assigned to me -> no "My events" group; an event running today counts as soon', () => {
+    const g = eventPickerGroups(confs, () => ({}), 'Maya', '2026-09-29');
+    t.eq([g[0].label, g[0].items[0].id], ['Happening soon', 'sibos-2026']);
   });
 }

@@ -1,5 +1,5 @@
 // Capture tab: one screen, one hand, works offline. Matching runs locally as the rep types.
-import { defaultCaptureConference } from '../scoring.js';
+import { defaultCaptureConference, dayNumber } from '../scoring.js';
 import { findMatches } from '../matching.js';
 import { relationshipSignal } from '../signals.js';
 import { esc, fmtShort, signalClass, flash } from './ui.js';
@@ -14,6 +14,19 @@ let lastSaved = null;
 let stickyEvent = null; // last event used this session (a new day/reload goes back to today's event)
 let stickyOther = '';
 
+// Grouped picker: My events (assigned to me), Happening soon (running or starting within 30 days),
+// then All events. Nothing is hidden: without team sync, a reassignment made on another device
+// won't reach this phone, so every event stays under "All events".
+export function eventPickerGroups(confs, planOf, me, today) {
+  const sorted = [...confs].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const upcoming = sorted.filter((c) => c.endDate >= today);
+  return [
+    { label: 'My events', items: me ? upcoming.filter((c) => planOf(c.id).rep === me) : [] },
+    { label: 'Happening soon', items: upcoming.filter((c) => dayNumber(c.startDate) <= dayNumber(today) + 30) },
+    { label: 'All events', items: sorted },
+  ].filter((g) => g.items.length);
+}
+
 export function render(el, ctx) {
   const { store } = ctx;
   const confs = [...store.conferences()].sort((a, b) => a.startDate.localeCompare(b.startDate));
@@ -23,12 +36,19 @@ export function render(el, ctx) {
   const selected = draft.event || stickyEvent || (def ? def.id : OTHER);
   const otherName = draft.otherEvent || stickyOther;
 
+  let marked = false; // an event can sit in two groups: only its first copy is selected
+  const option = (c) => {
+    const sel = !marked && c.id === selected;
+    if (sel) marked = true;
+    return `<option value="${esc(c.id)}"${sel ? ' selected' : ''}>${esc(c.name)} · ${esc(fmtShort(c.startDate))}</option>`;
+  };
+
   el.innerHTML = `<section class="view capture">
   ${me ? '' : `<div class="whoami"><b>Who are you?</b> (asked once)<div class="row">${store.team().map((n) => `<button type="button" class="chip" data-me="${esc(n)}">${esc(n)}</button>`).join(' ')}</div></div>`}
   <form id="cap" autocomplete="off" novalidate>
     <label>Event
-      <select name="event">${confs.map((c) => `<option value="${esc(c.id)}"${c.id === selected ? ' selected' : ''}>${esc(c.name)} · ${esc(fmtShort(c.startDate))}</option>`).join('')}
-        <option value="${OTHER}"${selected === OTHER ? ' selected' : ''}>Other event… (dinner, meetup, side event)</option>
+      <select name="event"><option value="${OTHER}"${selected === OTHER ? ' selected' : ''}>Other event… (dinner, meetup, side event)</option>
+        ${eventPickerGroups(confs, (id) => store.conferencePlan(id), me, ctx.today).map((g) => `<optgroup label="${esc(g.label)}">${g.items.map(option).join('')}</optgroup>`).join('')}
       </select>
     </label>
     <input name="otherEvent" placeholder="Event name, e.g. Payments dinner London" aria-label="Other event name" value="${esc(otherName)}"${selected === OTHER ? '' : ' hidden'}>
