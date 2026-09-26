@@ -102,6 +102,16 @@ details summary { cursor: pointer; font-weight: 600; color: var(--brand); paddin
 .pc.drag { background: #fdecec; border-color: #b3261e; color: #7f1d1d; }
 .ratings { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0; }
 .ratings td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+/* Narrow screens: one block per factor, "Factor · 4/5 · 26 pts" on one line and the reason under it */
+@media (max-width: 599px) {
+  .ratings, .ratings tbody { display: block; }
+  .ratings tr { display: flex; flex-wrap: wrap; align-items: baseline; border-top: 1px solid var(--line); padding: 6px 0; }
+  .ratings td { border: none; padding: 0; }
+  .ratings td:nth-child(1) { font-weight: 700; }
+  .ratings td:nth-child(2):not(:empty)::before, .ratings td:nth-child(3)::before { content: "·"; margin: 0 6px; color: var(--muted); }
+  .ratings td:nth-child(3) { white-space: nowrap; }
+  .ratings td:nth-child(4) { flex-basis: 100%; color: var(--muted); margin-top: 2px; }
+}
 
 /* Plan */
 .gaps { background: var(--warn-bg); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px; }
