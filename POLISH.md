@@ -74,3 +74,11 @@ localStorage is per browser and there is no team sync (next-week item #1).
 - Don't hide anything: without team sync, a reassignment made on another device won't reach
   this phone, so every event stays in "All events" even when it also appears above.
 - The preselected event (today's, or the next one) is still preselected.
+
+## 12. Contacts: "Needs review (N)" at the top of the list
+- One section listing every unresolved possible match (suggestions the rep skipped at
+  capture), e.g. `Dana Levy ↔ Dana Levi (Vantelo Pay)  [Same person] [Different]`.
+- Why: reps skip suggestions on the floor and clean up in the evening, so they need them in
+  one place instead of opening each contact.
+- Same actions as on the contact page (Same person = merge, Different = never ask again).
+- Hidden when there is nothing to review.
