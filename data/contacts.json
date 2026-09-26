@@ -66,7 +66,7 @@
       "vertical": "Travel wholesaler",
       "country": "UK",
       "_demoCase": "Same name, different person #1 (travel wholesaler, London). Never merge with David Cohen of Corvane Payments.",
-      "_expectedSignal": "Steady - nurture"
+      "_expectedSignal": "New"
     },
     {
       "id": "p-david-c",

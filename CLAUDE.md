@@ -23,13 +23,17 @@ phone, on a noisy show floor, often with bad Wi-Fi.
 
 ## Architecture decisions
 - **Storage: localStorage**, all access through ONE data-layer module (e.g. `js/store.js`)
-  so it can be swapped for Supabase later. Seed demo data loads on first visit.
-  "Reset demo data" button in Settings. Works offline.
+  so it can be swapped for Supabase later. Seed data (`data/*.json`) is read fresh on
+  every load; only the team's changes are stored in localStorage, as an overlay.
+  "Reset demo data" in Settings clears the overlay. **Never rename an `id` in the data
+  files** (overlay entries point at ids). Works offline.
   Trade-off (acknowledged): no sync between team members. Top "next week" item.
 - **Online vs offline - keep it simple.** Lead capture and all browsing work offline
   (localStorage). AI summaries and HubSpot push run only when there is a connection:
   when offline, those buttons are disabled with a short "needs connection" hint.
-  **No queues, no background sync, no service-worker magic.**
+  **No queues, no background sync.** One exception: a tiny **network-first** service
+  worker (`sw.js`) so the app reopens with no signal. Online, every request goes to the
+  network first, so new deploys show up immediately; the saved copy is used only offline.
 - **AI: Google Gemini API (free tier)** via a Netlify Function (`netlify/functions/ai.js`).
   Key in env var `GEMINI_API_KEY`; model name in env var `GEMINI_MODEL`
   (default: `gemini-3.8-flash`, fallback: `gemini-3.5-flash-lite`; both on the free tier,
@@ -57,7 +61,7 @@ phone, on a noisy show floor, often with bad Wi-Fi.
   property on the contact (Company association = bonus).
   Lead source = conference name, lifecycle stage = Lead.
   **Demo mode** when no token: show exactly what would be sent. CSV export as backup.
-- Time window: rolling 12 months, Oct 2026 - Sep 2027. Dates not yet announced are
+- Time window: 13 months, Sep 2026 - Sep 2027 (so Sibos, the next event, is in the plan). Dates not yet announced are
   estimated from prior years and marked "estimated" in the UI.
 
 ## Scoring model (0-100)
@@ -93,10 +97,11 @@ Each factor rated 1-5 per conference, **each with a one-line rationale** shown i
   2. Similar name + same company -> **high-confidence suggestion** the rep confirms.
   3. Similar name + **different company** -> **low-confidence suggestion** the rep confirms,
      shown carefully (two different people can share a name):
-     "Same Jonathan Cohen? Last time he was at Payoneer." [Yes] [No]
+     "Same Jonathan Cohen? Last seen at Payoneer." [Yes] [No]
      If Yes: link the records and log a **job change** on the contact's timeline.
      If No: keep them separate and don't ask again for this pair.
 - Fuzzy matches are never silent merges.
+- Nudge copy uses no gendered pronouns: the data has no gender, and guessing from a name misgenders.
 - Handle: nicknames (Jon/Jonathan, Mike/Michael), accents/casing, company suffixes
   (Ltd, Inc, GmbH), **job changes** (same person, new company = a signal, not a new
   contact; a move up in seniority is a positive signal).
@@ -104,8 +109,11 @@ Each factor rated 1-5 per conference, **each with a one-line rationale** shown i
   (matching runs locally, so it works offline).
 - Relationship signal = hybrid:
   - Rules (transparent): number of encounters, time span, recency, temperature trend,
-    concrete asks (volumes, pricing, demo, intro to finance/treasury), seniority change.
-    Labels like: New / Warming - act now / Steady - nurture / Stalled - possible tire-kicker.
+    concrete asks (volumes/amounts, pricing, demo, proposal, intro to CFO/finance/treasury,
+    shortlist, references, budget, contract, RFP, questionnaire, security review, trial,
+    pilot), seniority change. Six labels: New / Cooling - lost for now /
+    Warming - new role, re-engage / Warming - act now / Stalled - possible tire-kicker /
+    Steady - nurture.
   - AI (Gemini) reads the free-text notes across all encounters (what rules can't do,
     e.g. "asked about hedging Q3 volumes" = buying intent) and writes a short
     relationship-arc summary + recommended next step. It may disagree with the rules
@@ -186,3 +194,6 @@ Update this section if Noa replies.
 - After meaningful work, add a line to `AI_LOG.md` (what AI helped with / where it got
   in the way). This feeds the video.
 - Commit small, working increments.
+- Local preview: `python3 -m http.server 8000` → `http://localhost:8000/`. Tests: `tests.html`
+  in the browser, or `node tests/run.mjs` / `node tests/functions.mjs`. Netlify functions are
+  tested on the live site.

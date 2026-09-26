@@ -87,7 +87,8 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
 - CES, the biggest event in the list -> D (8)
 
 ### Time window
-- Rolling 12 months (Oct 2026 - Sep 2027), because that's how a team actually plans.
+- 13 months (Sep 2026 - Sep 2027): a year ahead from today, which is how a team actually
+  plans, and it includes Sibos (end of Sep 2026), the next event on the calendar.
 - 2027 events without announced dates get an estimated date from prior years, clearly
   marked "estimated" in the UI.
 
@@ -116,7 +117,11 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
   together they do. That's exactly what "B = attend if it clusters" means.
 - **Florida in November:** Phocuswright and CrossTech World run on the same dates,
   ~40 min apart: split the team instead of choosing.
-- **Gaps:** no A/B events in December, July or August; no A events in Asia.
+- **Gaps (computed from the data and checked in tests.html):** no A/B event in Sep 2026,
+  December, January (only CES, a D), July or August; no A-tier event in North America,
+  the Middle East or Asia-Pacific.
+- **No A-tier event in North America (best ~73):** travel cost from Tel Aviv pulls US
+  events down. A deliberate call for the team: accept it, or raise the weight for the US.
 
 ## 1b. How the conference list was built (and what it taught me)
 - **First pass:** Claude researched ~27 real events with web search in about 30 minutes,
@@ -148,7 +153,8 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
 1. Same email or LinkedIn URL -> linked automatically (same person).
 2. Similar name + same company -> high-confidence suggestion, rep confirms.
 3. Similar name + different company -> low-confidence suggestion, rep confirms:
-   "Same Jonathan Cohen? Last time he was at Payoneer." [Yes] [No]
+   "Same Jonathan Cohen? Last seen at Payoneer." [Yes] [No]
+   (No "he/she": the data has no gender, and guessing from a name misgenders.)
    - Yes -> link the records and log a **job change** on the timeline.
      Moving up in seniority = positive signal.
    - No -> keep separate, and **don't ask again** for this pair.
@@ -250,6 +256,9 @@ closing, or polite tire-kicker?
 - Works offline. Conference Wi-Fi is famously bad, so capture must not depend on it.
 - Simpler to set up and host.
 - All data access goes through one file, so moving to Supabase is a focused change.
+- **Seed data is read fresh on every load; the team's changes are an overlay on top.**
+  Fixes to the event list reach everyone automatically, and "Reset demo data" just clears
+  the overlay. Rule: never rename an `id` in the data files.
 - **Downside (said openly):** no sync between team members. #1 next-week item.
 
 ### Online vs. offline
@@ -258,6 +267,9 @@ closing, or polite tire-kicker?
   with a short hint.
 - **Deliberately no sync queues or background sync:** complexity that isn't worth it
   for this scope.
+- **One exception to "no offline magic": a tiny network-first cache** (service worker).
+  Without it the app wouldn't reopen with no signal on the show floor. Network-first:
+  with a connection every deploy shows up immediately; the saved copy is used only offline.
 
 ### HubSpot
 - Via a Netlify function because HubSpot blocks direct browser calls (CORS).
