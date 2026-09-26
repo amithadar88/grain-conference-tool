@@ -64,6 +64,7 @@ async function boot() {
   window.addEventListener('online', applyNet);
   window.addEventListener('offline', applyNet);
   render(ctx);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 boot();
