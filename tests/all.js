@@ -2,8 +2,9 @@
 import scoring from './scoring.test.js';
 import store from './store.test.js';
 import ui from './ui.test.js';
+import matching from './matching.test.js';
 
-export const suites = [scoring, store, ui];
+export const suites = [scoring, store, ui, matching];
 
 export function runAll(t, data) {
   for (const suite of suites) suite(t, data);
