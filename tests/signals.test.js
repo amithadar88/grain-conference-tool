@@ -1,5 +1,6 @@
 import {
   relationshipSignal, findAsks, seniority, timelineMarkers, summaryLine, hubspotPayload, contactsCsv, cutNote,
+  withEncounterContact,
 } from '../js/signals.js';
 
 const TODAY = '2026-09-26';
@@ -80,5 +81,33 @@ export default function signalsTests(t, data) {
     const csv = contactsCsv([{ person: { name: 'José García', company: 'Iberitrips S.L.', title: 'CFO', email: '', linkedin: '' },
       encounters: [{ date: '2025-03-06', event: 'ITB Berlin 2025', note: 'Said "yes", then\nleft, fast' }], signal: { label: 'New' } }]);
     t.eq(csv.split('\r\n')[1], 'José García,Iberitrips S.L.,CFO,,,ITB Berlin 2025,ITB Berlin 2025,1,New,"Said ""yes"", then\nleft, fast"');
+  });
+
+  t.group('Email / LinkedIn fallback from encounters');
+
+  t.test('Jonathan: no email on the person, latest encounter email is used', () => {
+    const p = people.find((x) => x.id === 'p-jonathan');
+    t.eq(withEncounterContact(p, encsOf('p-jonathan')).email, 'jon@meridiafx.io');
+  });
+  t.test('The person record wins over encounters', () => {
+    const p = { id: 'x', email: 'kept@a.com', linkedin: 'linkedin.com/in/kept' };
+    const encs = [{ date: '2026-01-01', email: 'other@b.com', linkedin: 'linkedin.com/in/other' }];
+    t.eq([withEncounterContact(p, encs).email, withEncounterContact(p, encs).linkedin], ['kept@a.com', 'linkedin.com/in/kept']);
+  });
+  t.test('Latest NON-EMPTY encounter value, in date order', () => {
+    const encs = [{ date: '2026-03-01', email: '' }, { date: '2025-01-01', email: 'old@a.com' }, { date: '2025-06-01', email: 'mid@a.com', linkedin: 'linkedin.com/in/mid' }];
+    const r = withEncounterContact({ id: 'x', email: '', linkedin: '' }, encs);
+    t.eq([r.email, r.linkedin], ['mid@a.com', 'linkedin.com/in/mid']);
+  });
+  t.test('Jonathan can be pushed: HubSpot payload carries the fallback email', () => {
+    const p = people.find((x) => x.id === 'p-jonathan');
+    const encs = encsOf('p-jonathan');
+    t.eq(hubspotPayload(p, encs, relationshipSignal(encs, TODAY)).email, 'jon@meridiafx.io');
+  });
+  t.test('CSV: every person is a row (with or without email), fallback email included', () => {
+    const rows = people.map((person) => ({ person, encounters: encsOf(person.id), signal: relationshipSignal(encsOf(person.id), TODAY) }));
+    const lines = contactsCsv(rows).split('\r\n');
+    t.eq(lines.length - 1, people.length);
+    t.ok(lines.some((l) => l.startsWith('Jonathan Cohen,') && l.includes('jon@meridiafx.io')), 'Jonathan row has jon@meridiafx.io');
   });
 }

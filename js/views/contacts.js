@@ -1,5 +1,5 @@
 // Contacts tab: list, contact page (timeline + signal), AI summary, HubSpot push, CSV.
-import { relationshipSignal, timelineMarkers, hubspotPayload, contactsCsv } from '../signals.js';
+import { relationshipSignal, timelineMarkers, hubspotPayload, contactsCsv, withEncounterContact } from '../signals.js';
 import { validateArc } from '../validate.js';
 import { aiArc, hubspotPush } from '../api.js';
 import { esc, fmtDate, signalClass } from './ui.js';
@@ -7,9 +7,9 @@ import { esc, fmtDate, signalClass } from './ui.js';
 let query = '';
 
 function rowsFor(store, today) {
-  return store.people().map((person) => {
-    const encounters = store.encountersFor(person.id);
-    return { person, encounters, signal: relationshipSignal(encounters, today) };
+  return store.people().map((p) => {
+    const encounters = store.encountersFor(p.id);
+    return { person: withEncounterContact(p, encounters), encounters, signal: relationshipSignal(encounters, today) };
   }).filter((r) => r.encounters.length)
     .sort((a, b) => b.encounters[b.encounters.length - 1].date.localeCompare(a.encounters[a.encounters.length - 1].date));
 }
@@ -92,9 +92,10 @@ async function pushRows(ctx, rows, out, done) {
 
 function renderPerson(el, ctx, personId) {
   const { store } = ctx;
-  const person = store.person(personId);
-  if (!person) { el.innerHTML = '<section class="view"><p>Contact not found. <a href="#contacts">Back to contacts</a></p></section>'; return; }
+  const stored = store.person(personId);
+  if (!stored) { el.innerHTML = '<section class="view"><p>Contact not found. <a href="#contacts">Back to contacts</a></p></section>'; return; }
   const encounters = store.encountersFor(personId);
+  const person = withEncounterContact(stored, encounters);
   const signal = relationshipSignal(encounters, ctx.today);
   const unresolved = store.unresolvedFor(personId).map((id) => store.person(id)).filter(Boolean);
   const pushed = store.hubspotPushed(personId);

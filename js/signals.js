@@ -129,8 +129,16 @@ export function summaryLine(signal, encounters) {
   return parts.join(' · ');
 }
 
-export function hubspotPayload(person, encounters, signal) {
+// The person record wins; otherwise the latest non-empty email / LinkedIn the rep typed at a meeting.
+export function withEncounterContact(person, encounters) {
+  const encs = [...encounters].sort(byDate).reverse();
+  const latest = (k) => (encs.find((e) => String(e[k] || '').trim()) || {})[k] || '';
+  return { ...person, email: person.email || latest('email'), linkedin: person.linkedin || latest('linkedin') };
+}
+
+export function hubspotPayload(rawPerson, encounters, signal) {
   const encs = [...encounters].sort(byDate);
+  const person = withEncounterContact(rawPerson, encs);
   const [firstname, ...rest] = String(person.name || '').trim().split(/\s+/);
   return {
     email: String(person.email || '').trim().toLowerCase(),
@@ -151,8 +159,9 @@ const csvCell = (v) => {
 // rows: [{ person, encounters, signal }] -> CSV text (the caller adds the BOM when downloading).
 export function contactsCsv(rows) {
   const header = ['name', 'company', 'title', 'email', 'linkedin', 'first event', 'last event', 'meetings', 'signal', 'last note'];
-  const lines = rows.map(({ person, encounters, signal }) => {
+  const lines = rows.map(({ person: rawPerson, encounters, signal }) => {
     const encs = [...encounters].sort(byDate);
+    const person = withEncounterContact(rawPerson, encs);
     const first = encs[0];
     const last = encs[encs.length - 1];
     return [person.name, person.company, person.title, person.email, person.linkedin,
