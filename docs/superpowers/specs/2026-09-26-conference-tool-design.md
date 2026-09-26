@@ -69,6 +69,10 @@ netlify/functions/hubspot.js  HubSpot proxy
 - Functions are classic `exports.handler` CommonJS files using Node's built-in `fetch`.
   No `package.json`, no `npm install`.
 - Tests run at `<site>/tests.html` (the browser won't read data files from disk).
+- **Local preview:** `python3 -m http.server 8000` from the repo root → app at
+  `http://localhost:8000/`, tests at `http://localhost:8000/tests.html`. Instant for UI and logic
+  changes; Netlify functions are tested on the live site only (locally the AI/HubSpot buttons
+  show their friendly "unavailable" message).
 
 ## 4. Data layer (`store.js`)
 
@@ -102,7 +106,7 @@ The store exposes read functions returning merged data, and write functions that
   or "Added manually by Maya, 26 Sep").
 - **Encounter (new capture):** `{ id, personId, conferenceId, event, date, nameAsEntered, company,
   title, email, linkedin, temperature, note, rep, capturedAt, linkedBy }` where `event` = conference
-  name, `date` = today, `linkedBy` = `"email"|"linkedin"|"confirmed"|"new"`. Seed encounters have
+  name (or the typed name for "Other event…", with `conferenceId: null`), `date` = today, `linkedBy` = `"email"|"linkedin"|"confirmed"|"new"`. Seed encounters have
   `event` (past edition name) and no `conferenceId`: both are valid.
 - **Person:** seed fields = latest known. Adding an encounter to a person patches their latest
   company/title/email/linkedin with the non-empty values typed. History is never overwritten:
@@ -161,7 +165,10 @@ As CLAUDE.md, plus these precise definitions:
 
 ### 6.1 Capture tab
 - **Conference:** preselected = the event running today (start ≤ today ≤ end), else the next
-  upcoming, else the most recent. A large "Change" control lists all events.
+  upcoming, else the most recent. A large "Change" control lists all events, plus
+  **"Other event…"** at the end: a free-text event name for dinners, meetups and side events not
+  in the list. Such an encounter is stored like the seed encounters: `event` = the typed name,
+  `conferenceId: null`. A lead is never lost because the event isn't listed.
 - **Fields:**
   - Name, Company, Note (large textarea, works with phone dictation)
   - Temperature: three large Hot / Warm / Cold buttons, none preselected; a temperature is
@@ -453,6 +460,7 @@ and a summary count. It loads the real `data/*.json`.
 
 **Store** (prefix `grain.test.`)
 - adding an encounter shows up in merged data
+- an "Other event…" encounter (`conferenceId: null`) saves and appears on the timeline
 - reset clears the overlay but keeps settings
 
 ### 12.2 Live-site checklist (manual, by Amit)
