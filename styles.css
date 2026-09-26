@@ -22,6 +22,10 @@ a { color: var(--brand); }
 .brand { font-weight: 700; }
 /* Offline strip: full width, directly under the green bar, pinned with it. */
 .net { flex: 1 0 100%; margin: 10px -16px -10px; padding: 6px 16px; background: var(--warn-bg); color: var(--warn); font-size: .85rem; font-weight: 600; text-align: center; border-bottom: 1px solid #f0d9a8; }
+/* Mobile-only gear: Settings isn't in the bottom nav there (see below), so it lives in the header. */
+.gear-btn { display: flex; align-items: center; padding: 4px; color: #fff; }
+.gear-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (min-width: 900px) { .gear-btn { display: none; } }
 .tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; display: flex; background: #fff; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -2px 10px rgba(0,0,0,.05); }
 .tabs a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; min-height: 64px; padding: 8px 2px; text-decoration: none; color: var(--muted); font-size: .75rem; font-weight: 600; }
 .tabs svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -31,6 +35,15 @@ a { color: var(--brand); }
 .cap-btn { display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin-top: -30px; border-radius: 50%; background: var(--brand); color: #fff; border: 4px solid #fff; box-shadow: 0 4px 14px rgba(11, 93, 69, .4); }
 .cap-btn svg { width: 30px; height: 30px; stroke-width: 2.6; }
 .tab-capture.active .cap-btn { background: #084a37; }
+/* Narrow screens: Today, Events, Capture, Contacts, Plan — Settings moves to the header gear */
+@media (max-width: 899px) {
+  .tabs a[data-tab="today"] { order: 1; }
+  .tabs a[data-tab="events"] { order: 2; }
+  .tabs a.tab-capture { order: 3; }
+  .tabs a[data-tab="contacts"] { order: 4; }
+  .tabs a[data-tab="plan"] { order: 5; }
+  .tabs a[data-tab="settings"] { display: none; }
+}
 /* Wide screens: the same items as a left sidebar; Capture is a highlighted item */
 @media (min-width: 900px) {
   body { padding-bottom: 0; padding-left: 208px; }
@@ -187,6 +200,11 @@ body:has(dialog[open]) { overflow: hidden; }
 .timeline-list li::before { content: ""; position: absolute; left: -8px; top: 5px; width: 13px; height: 13px; border-radius: 50%; background: var(--brand); }
 .mark { display: inline-block; font-size: .8rem; font-weight: 700; color: #7a4d00; background: var(--warn-bg); padding: 1px 8px; border-radius: 99px; margin: 2px 0; }
 pre { white-space: pre-wrap; word-break: break-word; background: #f0f2f0; padding: 10px; border-radius: 8px; font-size: .8rem; }
+
+/* Today */
+.guide ol { margin: 6px 0; padding-left: 18px; }
+.fu { display: inline-block; }
+.fu .box { margin: 8px 0 0; }
 
 /* Settings / forms */
 .form { max-width: 560px; }

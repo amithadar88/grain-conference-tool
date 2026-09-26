@@ -13,6 +13,7 @@ export function emptyOverlay() {
     unresolvedMatches: {}, // { [newPersonId]: [candidateId, ...] }
     aiSummaries: {},       // { [personId]: summary } overrides seed aiSummaries
     hubspotPushed: {},     // { [personId]: 'YYYY-MM-DD' }
+    guideDismissed: false, // Today page "New here? Try this" strip
   };
 }
 
@@ -183,6 +184,10 @@ export function createStore({ seed, storage, prefix = 'grain.' }) {
     // ---- HubSpot ----
     hubspotPushed(personId) { return overlay.hubspotPushed[personId] || null; },
     markPushed(personId, date) { overlay.hubspotPushed[personId] = date; persist(); },
+
+    // ---- Today page guide strip ----
+    guideDismissed() { return !!overlay.guideDismissed; },
+    dismissGuide() { overlay.guideDismissed = true; persist(); },
 
     // ---- Settings (survive "Reset demo data") ----
     settings() { return { ...settings }; },

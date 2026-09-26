@@ -1,7 +1,7 @@
 // App shell: loads the seed data, creates the store, switches tabs, tracks online/offline.
 import { createStore, safeStorage } from './store.js';
-import { runningToday } from './scoring.js';
 import { localToday } from './views/ui.js';
+import * as today from './views/today.js';
 import * as events from './views/events.js';
 import * as plan from './views/plan.js';
 import * as capture from './views/capture.js';
@@ -9,7 +9,7 @@ import * as contacts from './views/contacts.js';
 import * as settings from './views/settings.js';
 import * as add from './views/addConference.js';
 
-const VIEWS = { events, plan, capture, contacts, settings, add };
+const VIEWS = { today, events, plan, capture, contacts, settings, add };
 const TAB_OF = { add: 'events' }; // sub-pages highlight their parent tab
 const viewEl = document.getElementById('view');
 const netEl = document.getElementById('net');
@@ -84,9 +84,7 @@ async function boot() {
   }
   const store = createStore({ seed, storage: safeStorage(window.localStorage) });
   const ctx = { store, today: localToday(), applyNet, go: (hash) => { location.hash = hash; } };
-  if (!location.hash) {
-    location.replace(`#${runningToday(store.conferences(), ctx.today) ? 'capture' : 'events'}`);
-  }
+  if (!location.hash) location.replace('#today');
   window.addEventListener('hashchange', () => render(ctx));
   window.addEventListener('online', checkNetwork);
   window.addEventListener('offline', () => { reachable = false; checkNetwork(); });
