@@ -89,7 +89,8 @@ async function gemini(key, prompt, started) {
 }
 
 // ---- Relationship-arc summary ----
-function arcPrompt({ person = {}, encounters = [], rules = {} }) {
+function arcPrompt({ person = {}, encounters = [], rules = {}, today }) {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : new Date().toISOString().slice(0, 10);
   const lines = encounters.map((e, i) =>
     `${i + 1}. ${e.date} · ${e.event} · typed as "${e.name}"${e.title ? `, ${e.title}` : ''}${e.company ? ` at ${e.company}` : ''} · temperature: ${e.temperature} · note: "${e.note || ''}"`);
   return `${GRAIN}
@@ -105,6 +106,8 @@ Label meanings:
 - Warming - act now: clear buying intent or a deadline; follow up this week.
 - Stalled - possible tire-kicker: friendly, repeated, but no concrete progress.
 - Steady - nurture: genuine interest, no urgency yet.
+
+Today is ${day}. Judge every deadline in the notes against today's date: if one is close or has passed, say so in the arc and let it drive the label and the timing of the next step.
 
 Contact: ${person.name || ''}${person.title ? `, ${person.title}` : ''}${person.company ? ` at ${person.company}` : ''}
 Rules label: ${rules.label || ''}

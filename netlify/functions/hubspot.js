@@ -57,8 +57,19 @@ async function ensureProperties(hs) {
 
 async function errorText(res) {
   const body = await res.json().catch(() => ({}));
-  return body.message || `HubSpot error ${res.status}`;
+  return `HubSpot error ${res.status}${body.message ? `: ${body.message}` : ''}`;
 }
+
+// A per-contact error with HubSpot's reason. Retryable = worth one more try (5xx, rate limit, timeout).
+async function httpError(email, res) {
+  return { email, action: 'error', message: await errorText(res), retryable: res.status === 429 || res.status >= 500 };
+}
+const THROWN = {
+  hubspot_auth: ['HubSpot token invalid or missing permissions', false],
+  busy: ['HubSpot rate limit reached', true],
+  timeout: ['HubSpot took too long to answer', true],
+  unavailable: ["Couldn't reach HubSpot", true],
+};
 
 async function upsert(hs, contact) {
   const email = String(contact.email || '').trim().toLowerCase();
@@ -70,21 +81,22 @@ async function upsert(hs, contact) {
       method: 'POST',
       body: JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'email', operator: 'EQ', value: email }] }], properties: ['email'], limit: 1 }),
     });
-    if (!s.ok) return { email, action: 'error', message: await errorText(s) };
+    if (!s.ok) return httpError(email, s);
     let id = (((await s.json()).results || [])[0] || {}).id;
     if (!id) {
       const c = await hs('/crm/v3/objects/contacts', { method: 'POST', body: JSON.stringify({ properties: { ...properties, lifecyclestage: 'lead' } }) });
       if (c.ok) return { email, action: 'created', id: (await c.json()).id };
-      if (c.status !== 409) return { email, action: 'error', message: await errorText(c) };
+      if (c.status !== 409) return httpError(email, c);
       // Created moments ago and not in search yet: HubSpot tells us the existing id.
       id = ((await errorText(c)).match(/Existing ID:\s*(\d+)/) || [])[1];
       if (!id) return { email, action: 'error', message: 'Contact already exists' };
     }
     const u = await hs(`/crm/v3/objects/contacts/${id}`, { method: 'PATCH', body: JSON.stringify({ properties }) });
-    if (!u.ok) return { email, action: 'error', message: await errorText(u) };
+    if (!u.ok) return httpError(email, u);
     return { email, action: 'updated', id };
   } catch (e) {
-    return { email, action: 'error', message: e.code === 'hubspot_auth' ? 'HubSpot token invalid or missing permissions' : 'HubSpot unavailable' };
+    const [message, retryable] = THROWN[e.code] || THROWN.unavailable;
+    return { email, action: 'error', message, retryable };
   }
 }
 

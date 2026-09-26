@@ -6,6 +6,11 @@ import { esc, fmtDate, signalClass } from './ui.js';
 
 let query = '';
 
+// The last push result stays on screen until the next push or until the rep leaves the page.
+let pushResult = null; // { where: 'list' | personId, html }
+const keptResult = (where) => (pushResult && pushResult.where === where ? pushResult.html : '');
+if (typeof window !== 'undefined') window.addEventListener('hashchange', () => { pushResult = null; });
+
 function rowsFor(store, today) {
   return store.people().map((p) => {
     const encounters = store.encountersFor(p.id);
@@ -28,7 +33,7 @@ export function render(el, ctx, personId) {
     </div></div>
   <p class="needs-net-hint" hidden>HubSpot push needs a connection.</p>
   <input type="search" id="q" placeholder="Search name or company…" value="${esc(query)}" aria-label="Search contacts" style="margin:8px 0">
-  <div id="push-result"></div>
+  <div id="push-result">${keptResult('list')}</div>
   <ul class="rows" id="list"></ul>
 </section>`;
 
@@ -48,7 +53,10 @@ export function render(el, ctx, personId) {
   draw();
 
   el.querySelector('#csv').addEventListener('click', () => downloadCsv(rows, ctx.today));
-  el.querySelector('#push-all').addEventListener('click', () => pushRows(ctx, unpushed, el.querySelector('#push-result'), () => render(el, ctx)));
+  el.querySelector('#push-all').addEventListener('click', (e) => {
+    e.currentTarget.disabled = true;
+    pushRows(ctx, unpushed, el.querySelector('#push-result'), 'list', () => { render(el, ctx); ctx.applyNet(); });
+  });
 }
 
 function downloadCsv(rows, today) {
@@ -63,31 +71,35 @@ function downloadCsv(rows, today) {
 }
 
 // Push in batches of 10 (the function has ~10 seconds). Demo mode without a token.
-async function pushRows(ctx, rows, out, done) {
+async function pushRows(ctx, rows, out, where, done) {
   const { store } = ctx;
+  pushResult = null;
+  const show = (html) => { pushResult = { where, html }; out.innerHTML = html; };
   const token = store.settings().hubspotToken;
   const payloads = rows.filter((r) => r.person.email).map((r) => ({ id: r.person.id, payload: hubspotPayload(r.person, r.encounters, r.signal) }));
   const skipped = rows.filter((r) => !r.person.email).map((r) => r.person.name);
   if (!token) {
-    out.innerHTML = `<div class="box"><b>Demo mode: nothing was sent.</b> Add a HubSpot token in Settings to push for real. This is exactly what would be sent:
+    show(`<div class="box"><b>Demo mode: nothing was sent.</b> Add a HubSpot token in Settings to push for real. This is exactly what would be sent:
       <pre>${esc(JSON.stringify(payloads.map((p) => p.payload), null, 2))}</pre>
-      ${skipped.length ? `<p class="hint">Skipped (no email): ${esc(skipped.join(', '))}</p>` : ''}</div>`;
+      ${skipped.length ? `<p class="hint">Skipped (no email): ${esc(skipped.join(', '))}</p>` : ''}</div>`);
+    if (done) done();
     return;
   }
   out.innerHTML = '<p class="muted">Pushing to HubSpot…</p>';
-  const lines = [];
+  const lines = []; // [text, isError]
+  const retry = (res) => (res.retried ? ' (after 1 automatic retry)' : '');
   for (let i = 0; i < payloads.length; i += 10) {
     const batch = payloads.slice(i, i + 10);
     const r = await hubspotPush(token, batch.map((b) => b.payload));
-    if (!r.ok) { lines.push(`Error: ${r.message}`); break; }
+    if (!r.ok) { lines.push([`Not sent: ${r.message}${retry(r)}`, true]); break; }
     r.results.forEach((res, j) => {
-      if (res.action === 'error') lines.push(`${res.email}: ${res.message || 'error'}`);
-      else { store.markPushed(batch[j].id, ctx.today); lines.push(`${res.email}: ${res.action}`); }
+      if (res.action === 'error') lines.push([`${res.email}: not sent. ${res.message || 'Unknown error'}${retry(res)}`, true]);
+      else { store.markPushed(batch[j].id, ctx.today); lines.push([`${res.email}: ${res.action} ✓${retry(res)}`, false]); }
     });
   }
-  if (skipped.length) lines.push(`Skipped (no email): ${skipped.join(', ')}`);
-  out.innerHTML = `<div class="box"><b>HubSpot</b><ul>${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>`;
-  if (done && lines.every((l) => !l.startsWith('Error'))) setTimeout(done, 1500);
+  if (skipped.length) lines.push([`Skipped (no email): ${skipped.join(', ')}`, false]);
+  show(`<div class="box"><b>HubSpot</b><ul>${lines.map(([l, bad]) => `<li${bad ? ' class="error"' : ''}>${esc(l)}</li>`).join('')}</ul></div>`);
+  if (done) done();
 }
 
 function renderPerson(el, ctx, personId) {
@@ -143,7 +155,7 @@ function renderPerson(el, ctx, personId) {
     : '<button class="btn" disabled>Add an email to push</button>'}
     </div>
     <p class="needs-net-hint" hidden>Needs connection.</p>
-    <div id="push-result"></div>
+    <div id="push-result">${keptResult(personId)}</div>
   </div>
 </section>`;
 
@@ -163,10 +175,13 @@ function renderPerson(el, ctx, personId) {
   });
   const pushBtn = el.querySelector('#push');
   if (pushBtn) {
-    pushBtn.addEventListener('click', () => pushRows(ctx, [{ person, encounters, signal }], el.querySelector('#push-result'), () => {
-      renderPerson(el, ctx, personId);
-      ctx.applyNet();
-    }));
+    pushBtn.addEventListener('click', () => {
+      pushBtn.disabled = true;
+      pushRows(ctx, [{ person, encounters, signal }], el.querySelector('#push-result'), personId, () => {
+        renderPerson(el, ctx, personId);
+        ctx.applyNet();
+      });
+    });
   }
   renderAi(el.querySelector('#ai'), ctx, person, encounters, signal);
 }
@@ -196,6 +211,7 @@ function renderAi(box, ctx, person, encounters, signal) {
       person: { name: person.name, company: person.company, title: person.title },
       encounters: encounters.map((e) => ({ date: e.date, event: e.event, name: e.nameAsEntered, company: e.company, title: e.title, temperature: e.temperature, note: e.note })),
       rules: { label: signal.label, reasons: signal.reasons },
+      today: ctx.today,
     });
     const err = box.querySelector('#ai-err');
     const check = r.ok ? validateArc(r.result) : null;

@@ -7,6 +7,7 @@ import { createRunner } from './runner.js';
 const require = createRequire(import.meta.url);
 const ai = require('../netlify/functions/ai.js');
 const hubspot = require('../netlify/functions/hubspot.js');
+const { pushWithRetry } = await import('../js/api.js');
 
 const post = (body) => ({ httpMethod: 'POST', body: JSON.stringify(body) });
 const reply = (status, body, headers = {}) => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers });
@@ -25,7 +26,7 @@ const parse = (res) => JSON.parse(res.body);
 const { t, results } = createRunner();
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
-const { checkUrl, htmlToText } = ai._test;
+const { checkUrl, htmlToText, arcPrompt } = ai._test;
 
 // ---- ai.js ----
 test('status reports whether a server key exists, without calling Gemini', async () => {
@@ -156,6 +157,70 @@ test('hubspot: contact without email is reported, not sent', async () => {
   fakeFetch((url) => (url.includes('/properties/') ? reply(200, {}) : reply(500, {})));
   const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [{ ...dana, email: '' }] })));
   t.eq(r.results[0], { email: '', action: 'error', message: 'No email' });
+});
+
+test('arc prompt: includes today\'s date so deadlines are judged against it', () => {
+  const p = arcPrompt({ today: '2026-09-26', person: { name: 'Ahmed' }, encounters: [], rules: { label: 'Steady - nurture', reasons: [] } });
+  t.ok(p.includes('Today is 2026-09-26'), 'has today');
+  t.ok(/deadline/i.test(p.split('Today is')[1]), 'asks to weigh deadlines against today');
+});
+test('hubspot: HubSpot 503 -> the status and reason are kept, marked retryable', async () => {
+  fakeFetch((url) => (url.includes('/properties/') ? reply(200, {}) : url.endsWith('/search') ? reply(503, { message: 'Service Unavailable' }) : reply(500, {})));
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));
+  t.eq(r.results[0], { email: 'dana.levi@vantelopay.com', action: 'error', message: 'HubSpot error 503: Service Unavailable', retryable: true });
+});
+test('hubspot: a timeout says so and is marked retryable', async () => {
+  fakeFetch((url) => {
+    if (url.includes('/properties/')) return reply(200, {});
+    const e = new Error('aborted'); e.name = 'AbortError'; throw e;
+  });
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));
+  t.eq(r.results[0], { email: 'dana.levi@vantelopay.com', action: 'error', message: 'HubSpot took too long to answer', retryable: true });
+});
+test('hubspot: a validation error (400) keeps HubSpot\'s reason and is not retryable', async () => {
+  fakeFetch((url, opts) => {
+    if (url.includes('/properties/')) return reply(200, {});
+    if (url.endsWith('/search')) return reply(200, { results: [] });
+    if (url.endsWith('/objects/contacts') && opts.method === 'POST') return reply(400, { message: 'Property values were not valid' });
+    return reply(500, {});
+  });
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));
+  t.eq(r.results[0], { email: 'dana.levi@vantelopay.com', action: 'error', message: 'HubSpot error 400: Property values were not valid', retryable: false });
+});
+
+// ---- client retry (js/api.js) ----
+function fakePush(answers) {
+  const sent = [];
+  const push = async (contacts) => { sent.push(contacts.map((c) => c.email)); return answers[sent.length - 1]; };
+  return { sent, push };
+}
+const created = (email) => ({ email, action: 'created', id: '1' });
+const transient = (email) => ({ email, action: 'error', message: 'HubSpot took too long to answer', retryable: true });
+test('client: a transient per-contact error is retried once, for that contact only', async () => {
+  const { sent, push } = fakePush([{ ok: true, results: [created('a'), transient('b')] }, { ok: true, results: [created('b')] }]);
+  const r = await pushWithRetry(push, [{ email: 'a' }, { email: 'b' }], 0);
+  t.eq(sent, [['a', 'b'], ['b']]);
+  t.eq(r.results.map((x) => [x.email, x.action, !!x.retried]), [['a', 'created', false], ['b', 'created', true]]);
+});
+test('client: a permanent error is not retried', async () => {
+  const { sent, push } = fakePush([{ ok: true, results: [{ email: 'a', action: 'error', message: 'HubSpot error 400: bad', retryable: false }] }]);
+  const r = await pushWithRetry(push, [{ email: 'a' }], 0);
+  t.eq([sent.length, r.results[0].message, !!r.results[0].retried], [1, 'HubSpot error 400: bad', false]);
+});
+test('client: a whole-request transient failure (e.g. function timed out) is retried once', async () => {
+  const { sent, push } = fakePush([{ ok: false, error: 'unavailable', message: 'x' }, { ok: true, results: [created('a')] }]);
+  const r = await pushWithRetry(push, [{ email: 'a' }], 0);
+  t.eq([sent.length, r.ok, r.results[0].action, r.results[0].retried], [2, true, 'created', true]);
+});
+test('client: bad token is not retried', async () => {
+  const { sent, push } = fakePush([{ ok: false, error: 'hubspot_auth', message: 'HubSpot token invalid or missing permissions' }]);
+  const r = await pushWithRetry(push, [{ email: 'a' }], 0);
+  t.eq([sent.length, r.ok, r.error], [1, false, 'hubspot_auth']);
+});
+test('client: still failing after the retry -> latest reason, marked as retried', async () => {
+  const { sent, push } = fakePush([{ ok: true, results: [transient('a')] }, { ok: true, results: [{ ...transient('a'), message: 'HubSpot error 502: Bad Gateway' }] }]);
+  const r = await pushWithRetry(push, [{ email: 'a' }], 0);
+  t.eq([sent.length, r.results[0].message, r.results[0].retried], [2, 'HubSpot error 502: Bad Gateway', true]);
 });
 
 // Run async tests one by one, then report like tests/run.mjs.

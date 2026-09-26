@@ -45,4 +45,27 @@ async function post(fn, body, timeoutMs) {
 export const aiStatus = (key) => post('ai', { task: 'status', key }, 8000);
 export const aiArc = (key, payload) => post('ai', { task: 'arc', key, ...payload }, 15000);
 export const aiIntake = (key, payload) => post('ai', { task: 'intake', key, ...payload }, 15000);
-export const hubspotPush = (token, contacts) => post('hubspot', { token, contacts }, 15000);
+
+// One automatic retry for transient HubSpot failures (cold start, timeout, rate limit, 5xx).
+// Safe because the push is an upsert by email: a retry never creates a duplicate.
+const TRANSIENT = ['timeout', 'unavailable', 'busy'];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+export async function pushWithRetry(push, contacts, delayMs = 1500) {
+  const first = await push(contacts);
+  if (!first.ok) {
+    if (!TRANSIENT.includes(first.error)) return first;
+    await sleep(delayMs);
+    const again = await push(contacts);
+    return again.ok ? { ...again, results: again.results.map((x) => ({ ...x, retried: true })) } : { ...again, retried: true };
+  }
+  const redo = first.results.flatMap((x, i) => (x.action === 'error' && x.retryable ? [i] : []));
+  if (!redo.length) return first;
+  await sleep(delayMs);
+  const again = await push(redo.map((i) => contacts[i]));
+  const results = [...first.results];
+  redo.forEach((i, j) => { results[i] = { ...(again.ok ? again.results[j] : results[i]), retried: true }; });
+  return { ...first, results };
+}
+
+export const hubspotPush = (token, contacts) => pushWithRetry((batch) => post('hubspot', { token, contacts: batch }, 15000), contacts);
