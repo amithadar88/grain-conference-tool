@@ -17,6 +17,7 @@ const SHELL = [
   'js/today.js',
   'js/views/ui.js',
   'js/views/eventCard.js',
+  'js/views/followup.js',
   'js/views/events.js',
   'js/views/plan.js',
   'js/views/capture.js',
