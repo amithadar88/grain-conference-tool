@@ -104,6 +104,9 @@ details summary { cursor: pointer; font-weight: 600; color: var(--brand); paddin
 .match .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .match .chosen { font-weight: 700; color: var(--brand); }
 .done { margin-top: 12px; padding: 10px 12px; background: var(--brand-2); border-radius: var(--radius); }
+.flash { position: fixed; top: 0; left: 0; right: 0; z-index: 20; padding: calc(16px + env(safe-area-inset-top)) 16px 16px; background: #15803d; color: #fff; font-size: 1.25rem; font-weight: 800; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,.25); transform: translateY(-110%); transition: transform .2s ease-out; pointer-events: none; }
+.flash.show { transform: none; }
+@media (prefers-reduced-motion: reduce) { .flash { transition: none; } }
 .whoami { background: var(--warn-bg); padding: 10px 12px; border-radius: var(--radius); margin-bottom: 8px; }
 
 /* Contacts */

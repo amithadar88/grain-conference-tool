@@ -2,7 +2,7 @@
 import { defaultCaptureConference } from '../scoring.js';
 import { findMatches } from '../matching.js';
 import { relationshipSignal } from '../signals.js';
-import { esc, fmtShort, signalClass } from './ui.js';
+import { esc, fmtShort, signalClass, flash } from './ui.js';
 
 const OTHER = '__other';
 const FIELDS = ['event', 'otherEvent', 'name', 'company', 'note', 'temperature', 'email', 'linkedin', 'title'];
@@ -164,6 +164,7 @@ export function render(el, ctx) {
       : `added to ${esc(person.name)}'s history (${n} meetings)`;
     lastSaved = `<div class="done">Saved ✓ <b>${esc(v.name)}</b>, ${outcome}. <a href="#contacts/${encodeURIComponent(r.personId)}">Open contact</a></div>`;
 
+    flash(`✓ Saved: ${v.name}`);
     stickyEvent = v.event;
     stickyOther = v.otherEvent;
     store.clearDraft();

@@ -39,3 +39,23 @@ export const signalClass = (label) => `sig-${String(label).split(' ')[0].toLower
 export function localToday(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+// Big confirmation banner at the top of the screen for ~2 s, plus a short vibration where supported.
+let flashTimer = null;
+export function flash(text) {
+  let el = document.getElementById('flash');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'flash';
+    el.className = 'flash';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.classList.remove('show');
+  void el.offsetWidth; // restart the slide-in when saving twice in a row
+  el.classList.add('show');
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  try { if (navigator.vibrate) navigator.vibrate(60); } catch { /* not supported */ }
+}
