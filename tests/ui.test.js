@@ -1,6 +1,7 @@
 import { esc, safeUrl, fmtRange } from '../js/views/ui.js';
 import { eventCardHTML } from '../js/views/eventCard.js';
 import { scoreAll } from '../js/scoring.js';
+import { staffingChip } from '../js/views/plan.js';
 
 export default function uiTests(t, data) {
   t.group('Display safety');
@@ -24,5 +25,24 @@ export default function uiTests(t, data) {
   t.test('Every seed event renders a card without "undefined"', () => {
     const bad = scoreAll(data.conferences.conferences).filter((s) => eventCardHTML(s, { today: '2026-09-26' }).includes('undefined')).map((s) => s.id);
     t.eq(bad, []);
+  });
+
+  t.group('Plan: staffing at a glance');
+
+  t.test('Status + rep -> coloured chip text', () => {
+    t.eq([
+      staffingChip({ status: 'going', rep: 'Maya' }),
+      staffingChip({ status: 'considering', rep: 'Maya' }),
+      staffingChip({ status: 'going', rep: null }),
+      staffingChip({ status: 'skip', rep: 'Maya' }),
+    ], [
+      { kind: 'going', text: '✓ Going · Maya' },
+      { kind: 'considering', text: 'Considering · Maya' },
+      { kind: 'going', text: '✓ Going' },
+      { kind: 'skip', text: 'Skip · Maya' },
+    ]);
+  });
+  t.test('Rep but no decision yet -> neutral chip; nothing -> no chip', () => {
+    t.eq([staffingChip({ status: null, rep: 'Yoni' }), staffingChip({ status: null, rep: null })], [{ kind: 'rep', text: 'Yoni' }, null]);
   });
 }

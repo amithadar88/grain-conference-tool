@@ -72,6 +72,10 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 .plan-row select { width: auto; min-height: 36px; padding: 4px 8px; }
 .chip { min-height: 36px; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: .9rem; cursor: pointer; }
 .chip[aria-pressed="true"] { background: var(--brand); color: #fff; border-color: var(--brand); }
+/* Status colours: Going = green, Considering = amber, Skip = grey */
+.chip[data-status="going"][aria-pressed="true"] { background: #15803d; border-color: #15803d; }
+.chip[data-status="considering"][aria-pressed="true"] { background: #b45309; border-color: #b45309; }
+.chip[data-status="skip"][aria-pressed="true"] { background: #6b7280; border-color: #6b7280; }
 details summary { cursor: pointer; font-weight: 600; color: var(--brand); padding: 6px 0; min-height: 36px; }
 .why ul { margin: 0; padding-left: 18px; }
 .oneliner { font-size: .9rem; margin-top: 2px; }
@@ -82,8 +86,6 @@ details summary { cursor: pointer; font-weight: 600; color: var(--brand); paddin
 .pc.drag { background: #fdecec; border-color: #b3261e; color: #7f1d1d; }
 .ratings { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0; }
 .ratings td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
-.tier-aplus { border-left-color: var(--t-aplus); } .tier-a { border-left-color: var(--t-a); } .tier-b { border-left-color: var(--t-b); }
-.tier-c { border-left-color: var(--t-c); } .tier-d { border-left-color: var(--t-d); }
 
 /* Plan */
 .gaps { background: var(--warn-bg); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px; }
@@ -93,6 +95,13 @@ details summary { cursor: pointer; font-weight: 600; color: var(--brand); paddin
 .month .empty { font-size: .85rem; color: var(--muted); }
 .mini { display: block; background: #fff; border: 1px solid var(--line); border-left: 6px solid var(--t-c); border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; text-decoration: none; color: var(--text); font-size: .88rem; }
 .mini small { display: block; color: var(--muted); }
+.mini.dimmed { opacity: .45; }
+/* Tier colours (after .card and .mini so they win) */
+.tier-aplus { border-left-color: var(--t-aplus); } .tier-a { border-left-color: var(--t-a); } .tier-b { border-left-color: var(--t-b); }
+.tier-c { border-left-color: var(--t-c); } .tier-d { border-left-color: var(--t-d); }
+.staff { display: inline-block; margin-top: 4px; font-size: .78rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+.staff-going { background: #dcfce7; color: #14532d; } .staff-considering { background: #fef3c7; color: #7a4d00; }
+.staff-skip { background: #eef0ee; color: var(--muted); } .staff-rep { background: #eef0ee; color: var(--text); }
 @media (min-width: 800px) { .timeline { grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); overflow-x: auto; padding-bottom: 8px; } }
 
 /* Capture */

@@ -2,7 +2,14 @@
 import { scoreAll, findGaps, windowMonths, monthLabel, inWindow } from '../scoring.js';
 import { esc, fmtRange, tierClass } from './ui.js';
 
-const STATUS_TEXT = { going: 'Going', considering: 'Considering', skip: 'Skip' };
+const STATUS_TEXT = { going: '✓ Going', considering: 'Considering', skip: 'Skip' };
+
+// Staffing at a glance: { kind: 'going'|'considering'|'skip'|'rep', text } or null.
+export function staffingChip({ status, rep }) {
+  if (!status && !rep) return null;
+  if (!status) return { kind: 'rep', text: rep };
+  return { kind: status, text: [STATUS_TEXT[status], rep].filter(Boolean).join(' · ') };
+}
 
 function gapLines(gaps) {
   const lines = [];
@@ -27,12 +34,12 @@ export function render(el, ctx) {
   const mini = (s) => {
     const c = s.conf;
     const p = store.conferencePlan(s.id);
-    const status = [p.status && STATUS_TEXT[p.status], p.rep].filter(Boolean).join(' · ');
-    return `<a class="mini tier-${tierClass(s.tier)}" href="#events/${encodeURIComponent(s.id)}">
+    const chip = staffingChip(p);
+    return `<a class="mini tier-${tierClass(s.tier)}${p.status === 'skip' ? ' dimmed' : ''}" href="#events/${encodeURIComponent(s.id)}">
       <b>${esc(s.tier)} ${s.score}</b> ${esc(c.name)}
       <small>${esc(fmtRange(c.startDate, c.endDate))} · ${esc(c.city)}${c.dateStatus === 'estimated' ? ' · est.' : ''}</small>
       ${s.cluster ? `<span class="badge cluster">+5 cluster</span>` : ''}
-      ${status ? `<small><b>${esc(status)}</b></small>` : ''}
+      ${chip ? `<span class="staff staff-${chip.kind}">${esc(chip.text)}</span>` : ''}
     </a>`;
   };
 
