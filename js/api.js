@@ -44,6 +44,7 @@ async function post(fn, body, timeoutMs) {
 
 export const aiStatus = (key) => post('ai', { task: 'status', key }, 8000);
 export const aiArc = (key, payload) => post('ai', { task: 'arc', key, ...payload }, 15000);
+export const aiFollowup = (key, payload) => post('ai', { task: 'followup', key, ...payload }, 15000);
 export const aiIntake = (key, payload) => post('ai', { task: 'intake', key, ...payload }, 15000);
 
 // One automatic retry for transient HubSpot failures (cold start, timeout, rate limit, 5xx).

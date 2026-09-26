@@ -73,6 +73,20 @@ test('invalid key -> bad_key, no retry', async () => {
   const r = parse(await ai.handler(post({ task: 'arc', encounters: [] })));
   t.eq([r.error, calls.length], ['bad_key', 1]);
 });
+test('followup: returns subject + body, sends the key in a header', async () => {
+  process.env.GEMINI_API_KEY = 'server-key';
+  const answer = { subject: 'Following up from IAMTN', body: 'Hi Ahmed, great meeting you...' };
+  fakeFetch(() => geminiReply(answer));
+  const r = parse(await ai.handler(post({ task: 'followup', person: { name: 'Ahmed' }, encounters: [], rules: { label: 'Steady - nurture' }, rep: 'Maya' })));
+  t.eq([r.ok, r.result], [true, answer]);
+  t.ok(!calls[0].url.includes('server-key'), 'key not in URL');
+});
+test('followup prompt: never invents facts, includes the AI read when given', () => {
+  const { followupPrompt } = ai._test;
+  const p = followupPrompt({ today: '2026-09-26', person: { name: 'Ahmed' }, encounters: [], rules: { label: 'Steady - nurture' }, ai: { label: 'Warming - act now', arc: 'x', nextStep: 'Send proposal' }, rep: 'Maya' });
+  t.ok(/never invent/i.test(p), 'guards against invented facts');
+  t.ok(p.includes('Send proposal'), 'includes the AI next step when given');
+});
 test('non-JSON answer (even in ``` fences) is handled', async () => {
   process.env.GEMINI_API_KEY = 'k';
   fakeFetch(() => reply(200, { candidates: [{ content: { parts: [{ text: '```json\n{"a":1}\n```' }] } }] }));

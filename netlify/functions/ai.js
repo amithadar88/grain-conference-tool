@@ -121,6 +121,27 @@ Reply with JSON only, exactly these keys:
 {"label": one of ${JSON.stringify(LABELS)}, "arc": "2-3 sentences on how the relationship developed", "nextStep": "one concrete next step, with timing if the notes give one", "agreesWithRules": true or false, "disagreementReason": "one sentence if agreesWithRules is false, otherwise empty string"}`;
 }
 
+// ---- Follow-up email draft ----
+function followupPrompt({ person = {}, encounters = [], rules = {}, ai = null, rep = '', today }) {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : new Date().toISOString().slice(0, 10);
+  const lines = encounters.map((e, i) =>
+    `${i + 1}. ${e.date} · ${e.event} · typed as "${e.name}"${e.title ? `, ${e.title}` : ''}${e.company ? ` at ${e.company}` : ''} · temperature: ${e.temperature} · note: "${e.note || ''}"`);
+  return `${GRAIN}
+
+You draft a short follow-up email for a Grain salesperson to send after a conference. Only use facts from the meeting notes below: never invent numbers, prices, features or promises that are not there.
+
+Contact: ${person.name || ''}${person.title ? `, ${person.title}` : ''}${person.company ? ` at ${person.company}` : ''}
+Rules label: ${rules.label || ''}
+${ai ? `AI relationship read: ${ai.label} — ${ai.arc || ''} Suggested next step: ${ai.nextStep || ''}` : ''}
+Meetings:
+${lines.join('\n')}
+
+Today is ${day}. The email is from ${rep || 'the rep'} at Grain.
+Write a natural, short follow-up: a subject line, and a body under 120 words that references something specific from the notes and ends with one concrete next step (e.g. proposing a call, sending what they asked for, confirming a date). No gendered pronouns.
+Reply with JSON only, exactly these keys:
+{"subject": "one line", "body": "under 120 words"}`;
+}
+
 // ---- Conference intake ----
 function checkUrl(raw) {
   let u;
@@ -212,6 +233,10 @@ exports.handler = async (event) => {
       const r = await gemini(key, arcPrompt(body), started);
       return json(200, { ok: true, result: r.data, model: r.model });
     }
+    if (body.task === 'followup') {
+      const r = await gemini(key, followupPrompt(body), started);
+      return json(200, { ok: true, result: r.data, model: r.model });
+    }
     if (body.task === 'intake') {
       const pasted = String(body.pastedText || '').trim().slice(0, 5000);
       let pageText = '';
@@ -231,4 +256,4 @@ exports.handler = async (event) => {
 };
 
 // Exported for tests/functions.mjs only.
-exports._test = { checkUrl, htmlToText, parseJsonText, arcPrompt, intakePrompt };
+exports._test = { checkUrl, htmlToText, parseJsonText, arcPrompt, followupPrompt, intakePrompt };

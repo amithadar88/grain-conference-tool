@@ -33,6 +33,14 @@ export function validateArc(a) {
   return { ok: errors.length === 0, errors };
 }
 
+export function validateFollowup(f) {
+  const errors = [];
+  if (!f || typeof f !== 'object') return { ok: false, errors: ['not an object'] };
+  if (!nonEmpty(f.subject)) errors.push('subject missing');
+  if (!nonEmpty(f.body)) errors.push('body missing');
+  return { ok: errors.length === 0, errors };
+}
+
 // Checks a conference before it is saved (AI-drafted or manual).
 export function validateConference(c) {
   const errors = [];
