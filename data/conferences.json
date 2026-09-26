@@ -280,7 +280,7 @@
         }
       },
       "website": "https://websummit.com",
-      "notes": "Sanity check: huge size doesn't make up for low ICP density."
+      "notes": "Huge, but fintech is one track of 20+."
     },
     {
       "id": "phocuswright-2026",
@@ -397,7 +397,7 @@
           "why": "Long-haul with a connection (15h+), most expensive trip"
         }
       },
-      "notes": "Sanity check: the biggest event in the list, and still a clear skip. Dates estimated."
+      "notes": "Biggest event in the list, but almost no FX buyers. Dates estimated from prior years."
     },
     {
       "id": "finovate-europe-2027",
@@ -950,8 +950,7 @@
           "why": "Direct ~4.5h flight from Tel Aviv"
         }
       },
-      "website": "https://europe.money2020.com",
-      "notes": "Sanity check: should land in Tier A."
+      "website": "https://europe.money2020.com"
     },
     {
       "id": "phocuswright-europe-2027",
