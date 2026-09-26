@@ -35,3 +35,27 @@ added, list it in `sw.js` SHELL and bump `CACHE`.
 ## 5. Ratings table on narrow screens
 - Below ~600px, the ratings table becomes a stacked list: one block per factor with
   "Factor · score/5 · points" on one line and the reason under it. Wide screens keep the table.
+
+## 6. Status colours on the Events card
+- Going = green, Considering = amber, Skip = grey (today every status looks green).
+
+## 7. Plan: staffing at a glance
+- A small chip on the card, not a full-card colour:
+  - Going: green chip `✓ Going · Maya`
+  - Considering: amber chip `Considering · Maya`
+  - Skip: the whole card is dimmed.
+- No rep assigned: the chip shows the status only.
+
+## 8. Self-explanatory cluster badge
+- `🔗 +5 · same week as CrossTech World` instead of `+5 cluster`.
+- Names the neighbouring event that earned the bonus (if several, the nearest one).
+
+## 9. Plan: event details in a window over the Plan
+- Tapping a Plan card (or its badge) opens the event details over the Plan instead of
+  jumping to the Events tab.
+- Phones: a sheet that slides up from the bottom. Desktop: a centred window.
+- An ✕ button closes it; tapping outside it closes it too.
+- Closing it returns to the same spot in the Plan (same scroll position).
+
+Note (not a change): status not syncing between a laptop and a phone is expected:
+localStorage is per browser and there is no team sync (next-week item #1).

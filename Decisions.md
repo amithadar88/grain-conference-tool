@@ -279,6 +279,9 @@ closing, or polite tire-kicker?
 - **Demo mode** when there's no token (evaluators won't have one): shows exactly what
   would be sent, plus CSV export as backup. Real push shown in the video with a free
   HubSpot test account.
+- **Legacy private app, not Service Keys:** HubSpot now recommends "Service Keys" over
+  private apps. I chose a legacy private app because it's the proven path for this
+  integration (contact upsert by email). Switching to Service Keys is a small next-week item.
 
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
@@ -307,7 +310,8 @@ closing, or polite tire-kicker?
 1. **Team sync** (Supabase): shared data, so the team sees each other's leads and plans.
 2. **History bonus:** score events by the pipeline they actually produced for Grain.
 3. **Cost factor:** ticket/booth cost in the scoring.
-4. **HubSpot Company association** + pulling existing HubSpot contacts into matching.
+4. **HubSpot Company association** + pulling existing HubSpot contacts into matching;
+   move from the legacy private app to HubSpot Service Keys.
 5. **AI conference discovery by niche** (see section 1b): the AI proactively suggests
    events we don't know about; the "add from link" flow then rates them.
 6. **Paid AI tier** before using real customer data.
