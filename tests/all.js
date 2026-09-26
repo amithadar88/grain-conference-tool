@@ -3,8 +3,9 @@ import scoring from './scoring.test.js';
 import store from './store.test.js';
 import ui from './ui.test.js';
 import matching from './matching.test.js';
+import signals from './signals.test.js';
 
-export const suites = [scoring, store, ui, matching];
+export const suites = [scoring, store, ui, matching, signals];
 
 export function runAll(t, data) {
   for (const suite of suites) suite(t, data);
