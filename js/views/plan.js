@@ -1,5 +1,5 @@
 // Plan tab: 13-month timeline by tier, clusters, status/rep, and a short gaps list.
-import { scoreAll, findGaps, windowMonths, monthLabel, inWindow } from '../scoring.js';
+import { scoreAll, findGaps, gapLines, windowMonths, monthLabel, inWindow } from '../scoring.js';
 import { esc, fmtRange, tierClass } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
 
@@ -10,20 +10,6 @@ export function staffingChip({ status, rep }) {
   if (!status && !rep) return null;
   if (!status) return { kind: 'rep', text: rep };
   return { kind: status, text: [STATUS_TEXT[status], rep].filter(Boolean).join(' · ') };
-}
-
-function gapLines(gaps) {
-  const lines = [];
-  lines.push(gaps.months.length
-    ? `No A/B event in: ${gaps.months.map(monthLabel).join(', ')}`
-    : 'Every month has at least one A/B event');
-  lines.push(gaps.regions.length
-    ? `No A-tier event in: ${gaps.regions.join(', ')}`
-    : 'Every region has an A-tier event');
-  lines.push(gaps.verticals.length
-    ? `No A/B event for: ${gaps.verticals.join(', ')}`
-    : 'Every core vertical (payments, cross-border, travel, treasury, FX) has an A/B event');
-  return lines;
 }
 
 export function render(el, ctx) {

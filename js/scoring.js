@@ -106,7 +106,7 @@ export function shortWhy(why, max = 45) {
 // and the biggest drag, from one scoreAll() item. No AI, no manual writing.
 export function oneLineSummary(s) {
   const best = s.pros.reduce((a, p) => (!a || s.points[p.factor] > s.points[a.factor] ? p : a), null);
-  return [best && `✅ ${shortWhy(best.why)}`, s.drag && `🔻 Drag: ${s.drag.label}`].filter(Boolean).join(' · ');
+  return [best && `✅ ${best.why}`, s.drag && `🔻 Drag: ${s.drag.label}`].filter(Boolean).join(' · ');
 }
 
 // Dates are 'YYYY-MM-DD'; convert to whole days so time zones never matter.
@@ -161,6 +161,21 @@ export function findGaps(scored, win = WINDOW) {
     regions: REGIONS.filter((r) => !inWin.some((s) => s.conf.region === r && isA(s))),
     verticals: CORE_VERTICALS.filter((v) => !inWin.some((s) => (s.conf.verticals || []).includes(v) && isAB(s))),
   };
+}
+
+// "No A/B event in: ..." / "Every month has at least one A/B event", one line per gap category.
+export function gapLines(gaps) {
+  const lines = [];
+  lines.push(gaps.months.length
+    ? `No A/B event in: ${gaps.months.map(monthLabel).join(', ')}`
+    : 'Every month has at least one A/B event');
+  lines.push(gaps.regions.length
+    ? `No A-tier event in: ${gaps.regions.join(', ')}`
+    : 'Every region has an A-tier event');
+  lines.push(gaps.verticals.length
+    ? `No A/B event for: ${gaps.verticals.join(', ')}`
+    : 'Every core vertical (payments, cross-border, travel, treasury, FX) has an A/B event');
+  return lines;
 }
 
 export function runningToday(conferences, today) {

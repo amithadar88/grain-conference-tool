@@ -133,7 +133,7 @@ export default function scoringTests(t, data) {
   });
   t.test('Strongest pro (most points among 4-5s) + biggest drag', () => {
     // buyerAccess 5 earns 30 pts, icpFit 4 earns 26.25: buyer access wins. Drag = audience market (rated 1, -15).
-    t.eq(one(conf([4, 5, 1, 3, 4], { buyerAccess: 'Hosted buyers and CFOs; very senior' })), '✅ Hosted buyers and CFOs · 🔻 Drag: Audience market');
+    t.eq(one(conf([4, 5, 1, 3, 4], { buyerAccess: 'Hosted buyers and CFOs; very senior' })), '✅ Hosted buyers and CFOs; very senior · 🔻 Drag: Audience market');
   });
   t.test('No pros -> only the drag', () => {
     t.eq(one(conf([3, 3, 1, 3, 3])), '🔻 Drag: ICP fit');
@@ -142,6 +142,6 @@ export default function scoringTests(t, data) {
     t.eq(one(conf([5, 5, 5, 5, 5], { icpFit: 'All PSPs' })), '✅ All PSPs');
   });
   t.test('Real data: IAMTN', () => {
-    t.eq(oneLineSummary(byId('iamtn-summit-2026')).startsWith('✅ Money transfer operators and cross-border… · 🔻 Drag: '), true);
+    t.eq(oneLineSummary(byId('iamtn-summit-2026')).startsWith('✅ Money transfer operators and cross-border payment companies: the densest ICP room in the list · 🔻 Drag: '), true);
   });
 }
