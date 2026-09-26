@@ -1,5 +1,5 @@
 import { esc, safeUrl, fmtRange } from '../js/views/ui.js';
-import { eventCardHTML } from '../js/views/eventCard.js';
+import { eventCardHTML, clusterBadge } from '../js/views/eventCard.js';
 import { scoreAll } from '../js/scoring.js';
 import { staffingChip } from '../js/views/plan.js';
 
@@ -44,5 +44,16 @@ export default function uiTests(t, data) {
   });
   t.test('Rep but no decision yet -> neutral chip; nothing -> no chip', () => {
     t.eq([staffingChip({ status: null, rep: 'Yoni' }), staffingChip({ status: null, rep: null })], [{ kind: 'rep', text: 'Yoni' }, null]);
+  });
+
+  t.group('Cluster badge');
+
+  t.test('Says what the +5 is for, with the exact gap on hover', () => {
+    t.eq([clusterBadge({ name: 'CrossTech World', gap: 4 }), clusterBadge({ name: 'DACT', gap: 0 }), clusterBadge({ name: 'X', gap: 1 }), clusterBadge(null)], [
+      { text: '🔗 +5 · same week as CrossTech World', title: 'Cluster bonus +5: CrossTech World is 4 days away, in the same region' },
+      { text: '🔗 +5 · same days as DACT', title: 'Cluster bonus +5: DACT overlaps, in the same region' },
+      { text: '🔗 +5 · same week as X', title: 'Cluster bonus +5: X is 1 day away, in the same region' },
+      null,
+    ]);
   });
 }

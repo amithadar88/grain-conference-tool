@@ -9,6 +9,21 @@ function listItems(items, empty) {
   return items.map((i) => `<li><b>${esc(i.label)} (${i.score}/5)</b> ${esc(i.why)}</li>`).join('');
 }
 
+// "🔗 +5 · same week as CrossTech World" (the exact gap is on hover). null when there is no cluster.
+export function clusterBadge(cluster) {
+  if (!cluster) return null;
+  const when = cluster.gap === 0 ? 'overlaps' : `is ${cluster.gap} day${cluster.gap === 1 ? '' : 's'} away`;
+  return {
+    text: `🔗 +5 · same ${cluster.gap === 0 ? 'days' : 'week'} as ${cluster.name}`,
+    title: `Cluster bonus +5: ${cluster.name} ${when}, in the same region`,
+  };
+}
+
+export const clusterBadgeHTML = (cluster) => {
+  const b = clusterBadge(cluster);
+  return b ? `<span class="badge cluster" title="${esc(b.title)}">${esc(b.text)}</span>` : '';
+};
+
 function provenance(c) {
   if (!c.addedBy) return '';
   const how = c.source === 'ai' ? 'AI-drafted, confirmed by' : 'Added manually by';
@@ -23,7 +38,6 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
   const c = s.conf;
   const past = today && c.endDate < today;
   const site = safeUrl(c.website);
-  const clusterText = s.cluster ? `+5 cluster: ${s.cluster.name} (${s.cluster.gap === 0 ? 'same days' : `${s.cluster.gap} days`})` : '';
   const statusButtons = STATUSES.map(([v, label]) =>
     `<button type="button" class="chip" data-status="${v}" data-id="${esc(c.id)}" aria-pressed="${plan.status === v}">${label}</button>`).join('');
   const repOptions = ['<option value="">Assign rep…</option>', ...team.map((n) =>
@@ -40,7 +54,7 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
   </div>
   <div class="action">${esc(s.action)}</div>
   <div class="oneliner">${esc(oneLineSummary(s))}</div>
-  <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterText ? `<span class="badge cluster">${esc(clusterText)}</span>` : ''}${provenance(c)}</div>
+  <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterBadgeHTML(s.cluster)}${provenance(c)}</div>
   ${controls ? `<div class="plan-row">${statusButtons}<select data-rep data-id="${esc(c.id)}" aria-label="Assigned rep">${repOptions}</select></div>` : ''}
   <details${open ? ' open' : ''}>
     <summary>Why ${esc(s.tier)}?</summary>

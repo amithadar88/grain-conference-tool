@@ -1,6 +1,7 @@
 // Plan tab: 13-month timeline by tier, clusters, status/rep, and a short gaps list.
 import { scoreAll, findGaps, windowMonths, monthLabel, inWindow } from '../scoring.js';
 import { esc, fmtRange, tierClass } from './ui.js';
+import { clusterBadgeHTML } from './eventCard.js';
 
 const STATUS_TEXT = { going: '✓ Going', considering: 'Considering', skip: 'Skip' };
 
@@ -38,7 +39,7 @@ export function render(el, ctx) {
     return `<a class="mini tier-${tierClass(s.tier)}${p.status === 'skip' ? ' dimmed' : ''}" href="#events/${encodeURIComponent(s.id)}">
       <b>${esc(s.tier)} ${s.score}</b> ${esc(c.name)}
       <small>${esc(fmtRange(c.startDate, c.endDate))} · ${esc(c.city)}${c.dateStatus === 'estimated' ? ' · est.' : ''}</small>
-      ${s.cluster ? `<span class="badge cluster">+5 cluster</span>` : ''}
+      ${clusterBadgeHTML(s.cluster)}
       ${chip ? `<span class="staff staff-${chip.kind}">${esc(chip.text)}</span>` : ''}
     </a>`;
   };
