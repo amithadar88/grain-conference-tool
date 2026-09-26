@@ -270,6 +270,11 @@ closing, or polite tire-kicker?
 - **One exception to "no offline magic": a tiny network-first cache** (service worker).
   Without it the app wouldn't reopen with no signal on the show floor. Network-first:
   with a connection every deploy shows up immediately; the saved copy is used only offline.
+- **Offline detection doesn't trust the browser alone.** After a reload with no signal the
+  browser can still claim "online", so the app also makes one tiny direct check (a HEAD
+  request that skips the cache) and re-checks every 15 s until the network is back.
+- **New deploys take over at once:** the service worker activates immediately
+  (skipWaiting + clients.claim), so nobody has to close their tabs to get a fix.
 
 ### HubSpot
 - Via a Netlify function because HubSpot blocks direct browser calls (CORS).
