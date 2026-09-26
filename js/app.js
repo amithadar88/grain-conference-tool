@@ -5,9 +5,10 @@ import { localToday } from './views/ui.js';
 import * as events from './views/events.js';
 import * as plan from './views/plan.js';
 import * as capture from './views/capture.js';
+import * as contacts from './views/contacts.js';
 import * as settings from './views/settings.js';
 
-const VIEWS = { events, plan, capture, settings };
+const VIEWS = { events, plan, capture, contacts, settings };
 const TAB_OF = { add: 'events' }; // sub-pages highlight their parent tab
 const viewEl = document.getElementById('view');
 const netEl = document.getElementById('net');
