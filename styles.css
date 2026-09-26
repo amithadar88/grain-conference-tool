@@ -7,7 +7,7 @@
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+body { margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: calc(96px + env(safe-area-inset-bottom)); } /* room for the tab bar and the raised Capture button */
 h2 { font-size: 1.25rem; margin: 0 0 .75rem; }
 h3 { font-size: 1.05rem; margin: 0; }
 h4 { font-size: .9rem; margin: .75rem 0 .25rem; }
@@ -22,11 +22,27 @@ a { color: var(--brand); }
 .brand { font-weight: 700; }
 /* Offline strip: full width, directly under the green bar, pinned with it. */
 .net { flex: 1 0 100%; margin: 10px -16px -10px; padding: 6px 16px; background: var(--warn-bg); color: var(--warn); font-size: .85rem; font-weight: 600; text-align: center; border-bottom: 1px solid #f0d9a8; }
-.tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; display: flex; background: #fff; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
-.tabs a { flex: 1; text-align: center; padding: 12px 2px; min-height: var(--tap); text-decoration: none; color: var(--muted); font-size: .85rem; font-weight: 600; }
+.tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; display: flex; background: #fff; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -2px 10px rgba(0,0,0,.05); }
+.tabs a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; min-height: 64px; padding: 8px 2px; text-decoration: none; color: var(--muted); font-size: .75rem; font-weight: 600; }
+.tabs svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .tabs a.active { color: var(--brand); box-shadow: inset 0 3px 0 var(--brand); }
-.tabs a.tab-capture { color: #fff; background: var(--brand); }
-.tabs a.tab-capture.active { box-shadow: inset 0 3px 0 #9fe0c9; }
+/* Capture: a big round button raised out of the centre of the bar (never over content: body padding leaves room) */
+.tabs a.tab-capture, .tabs a.tab-capture.active { color: var(--brand); box-shadow: none; }
+.cap-btn { display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin-top: -30px; border-radius: 50%; background: var(--brand); color: #fff; border: 4px solid #fff; box-shadow: 0 4px 14px rgba(11, 93, 69, .4); }
+.cap-btn svg { width: 30px; height: 30px; stroke-width: 2.6; }
+.tab-capture.active .cap-btn { background: #084a37; }
+/* Wide screens: the same items as a left sidebar; Capture is a highlighted item */
+@media (min-width: 900px) {
+  body { padding-bottom: 0; padding-left: 208px; }
+  .tabs { top: 0; right: auto; width: 208px; flex-direction: column; gap: 4px; padding: 64px 12px 16px; border-top: none; border-right: 1px solid var(--line); box-shadow: none; }
+  .tabs a { flex: none; flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: var(--radius); font-size: .95rem; }
+  .tabs a.active { box-shadow: none; background: var(--brand-2); }
+  .tabs a.tab-capture { background: var(--brand); color: #fff; margin: 4px 0; }
+  .tabs a.tab-capture.active { background: #084a37; color: #fff; }
+  .cap-btn { width: auto; height: auto; margin: 0; border: none; border-radius: 0; background: none; box-shadow: none; }
+  .cap-btn svg { width: 24px; height: 24px; }
+  .tab-capture.active .cap-btn { background: none; }
+}
 
 /* Layout */
 .view { max-width: 1100px; margin: 0 auto; padding: 16px; }
