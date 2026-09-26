@@ -246,6 +246,22 @@ closing, or polite tire-kicker?
   looks like one already in the list (same entity-matching idea as contacts).
 - **Trade-off:** added entries live in the rep's browser only (no team sync yet).
 
+## 3c. Third AI feature: follow-up email draft
+- **Flow:** one button (on Today's Act-now rows and on the contact page) drafts a
+  subject + short body from the contact's timeline, the saved AI arc summary (if any),
+  the rep's name and today's date. The rep reviews, copies or opens it in their own
+  email client (`mailto:`) — nothing is sent by the app.
+- **Same guardrails as the AI summary**, and shared code: `js/views/followup.js` is the
+  one place both Today and the contact page call, so "no key -> clear message",
+  "offline -> disabled with a hint" and "local preview -> live-site-only message" exist
+  once, not twice.
+- **Not cached, unlike the AI summary:** a draft is disposable and cheap to regenerate
+  ("Draft again"); nothing about it needs to survive a reload the way a relationship
+  verdict does.
+- **Guardrail in the prompt itself:** told explicitly never to invent facts, numbers or
+  prices — this is an email a rep might actually send, so a plausible-sounding invented
+  number is worse than a generic one.
+
 ## 4. Tech trade-offs
 - **No build step, free tools only,** so a non-developer can host and update it.
 - **Keys never in code:** Netlify environment variables or the in-app Settings page.
@@ -291,6 +307,30 @@ closing, or polite tire-kicker?
 - **Legacy private app, not Service Keys:** HubSpot now recommends "Service Keys" over
   private apps. I chose a legacy private app because it's the proven path for this
   integration (contact upsert by email). Switching to Service Keys is a small next-week item.
+
+## 4b. Today page: the default landing page
+- **Why a landing page at all:** a list of scored conferences and a contact database are
+  both things a rep *browses*; neither answers "what should I do right now?" Today
+  answers that question directly, so it's the first nav item and where the app opens.
+- **All rules-based, reusing existing computations** — no new AI except the follow-up
+  button: Act-now reuses `relationshipSignal` plus the same AI-override idea already in
+  the arc summary (`isActNow`/`urgencyRank` in `signals.js`); Coming-up reuses
+  `scoreAll`/tiers/`conferencePlan`; Plan gaps reuses `findGaps`/`gapLines` verbatim
+  (moved into `scoring.js` so both Plan and Today call the same function).
+  This keeps Today "free" to compute — it's a different view over data that already
+  exists, not a new source of truth.
+- **Act-now = rules Warming OR a saved AI override to "Warming - act now,"** not a new
+  label set. Six labels stay canonical everywhere (Today, Contacts, HubSpot payload).
+- **A stale AI summary still counts** for Act-now: it's the last judgment the team
+  actually has, and a new encounter just means "worth a fresh look," not "ignore this."
+- **Evaluator guide strip:** looks up its targets (Ahmed Hassan, the first A+ event) by
+  query against live data rather than hardcoded ids, so it never links to something that
+  moved or was edited; if a target isn't found, that guide line is silently skipped.
+  Dismissal lives in the store overlay, so it comes back after "Reset demo data" — the
+  same mechanism as every other piece of team-changed state.
+- **Trade-off:** the app no longer auto-opens Capture when a conference is running today
+  (previous default). Today's "Act now"/"Coming up" replace that shortcut; Capture is
+  still one tap away (centered, raised) in the bottom nav.
 
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
