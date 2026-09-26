@@ -164,6 +164,11 @@ test('arc prompt: includes today\'s date so deadlines are judged against it', ()
   t.ok(p.includes('Today is 2026-09-26'), 'has today');
   t.ok(/deadline/i.test(p.split('Today is')[1]), 'asks to weigh deadlines against today');
 });
+test('arc prompt: deadlines as an explicit date plus relative time (summaries are read later)', () => {
+  const p = arcPrompt({ today: '2026-09-26', person: {}, encounters: [], rules: {} });
+  t.ok(p.includes('"Q3 ends 30 Sep 2026, 4 days from today"'), 'gives the example format');
+  t.ok(/never.*only relative/i.test(p), 'forbids relative-only wording');
+});
 test('hubspot: HubSpot 503 -> the status and reason are kept, marked retryable', async () => {
   fakeFetch((url) => (url.includes('/properties/') ? reply(200, {}) : url.endsWith('/search') ? reply(503, { message: 'Service Unavailable' }) : reply(500, {})));
   const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));

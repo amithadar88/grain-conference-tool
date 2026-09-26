@@ -108,6 +108,7 @@ Label meanings:
 - Steady - nurture: genuine interest, no urgency yet.
 
 Today is ${day}. Judge every deadline in the notes against today's date: if one is close or has passed, say so in the arc and let it drive the label and the timing of the next step.
+Write every deadline as an explicit date plus the time from today, e.g. "Q3 ends 30 Sep 2026, 4 days from today". Never use only relative wording ("in 4 days", "next week"): this summary is saved and read again later.
 
 Contact: ${person.name || ''}${person.title ? `, ${person.title}` : ''}${person.company ? ` at ${person.company}` : ''}
 Rules label: ${rules.label || ''}
