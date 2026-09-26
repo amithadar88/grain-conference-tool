@@ -14,6 +14,7 @@ const SHELL = [
   'js/signals.js',
   'js/validate.js',
   'js/api.js',
+  'js/today.js',
   'js/views/ui.js',
   'js/views/eventCard.js',
   'js/views/events.js',
