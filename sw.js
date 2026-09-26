@@ -57,11 +57,19 @@ async function networkFirst(req) {
     return res;
   } catch {
     const hit = await cache.match(req, { ignoreSearch: true });
-    if (hit) return hit;
+    if (hit) return savedCopy(hit);
     if (req.mode === 'navigate') {
       const shell = await cache.match('index.html');
-      if (shell) return shell;
+      if (shell) return savedCopy(shell);
     }
     return new Response('Offline and not saved yet', { status: 503, headers: { 'content-type': 'text/plain' } });
   }
+}
+
+// Tells the page "this came from the saved copy, the network failed": the app shows the offline
+// banner even when the browser still claims to be online.
+function savedCopy(res) {
+  const headers = new Headers(res.headers);
+  headers.set('x-grain-saved-copy', '1');
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
 }
