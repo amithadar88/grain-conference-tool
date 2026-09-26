@@ -6,6 +6,7 @@ import { createRunner } from './runner.js';
 
 const require = createRequire(import.meta.url);
 const ai = require('../netlify/functions/ai.js');
+const hubspot = require('../netlify/functions/hubspot.js');
 
 const post = (body) => ({ httpMethod: 'POST', body: JSON.stringify(body) });
 const reply = (status, body, headers = {}) => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers });
@@ -103,6 +104,58 @@ test('intake: a redirect to an internal address is refused', async () => {
   process.env.GEMINI_API_KEY = 'k';
   fakeFetch(() => reply(302, '', { location: 'http://127.0.0.1/admin' }));
   t.eq(parse(await ai.handler(post({ task: 'intake', name: 'X', url: 'https://example.com' }))).error, 'bad_url');
+});
+
+// ---- hubspot.js ----
+const dana = { email: 'Dana.Levi@vantelopay.com', firstname: 'Dana', lastname: 'Levi', company: 'Vantelo Pay', jobtitle: 'VP Finance', grain_lead_source: 'Money20/20 Europe 2025', grain_conference_summary: 'Warming - act now · 3 meetings' };
+
+test('hubspot: no token -> no_token', async () => {
+  t.eq(parse(await hubspot.handler(post({ contacts: [dana] }))), { ok: false, error: 'no_token' });
+});
+test('hubspot: new contact -> properties created once, contact created as Lead', async () => {
+  fakeFetch((url, opts) => {
+    if (url.includes('/properties/contacts/')) return reply(404, {});
+    if (url.endsWith('/properties/contacts')) return reply(201, {});
+    if (url.endsWith('/search')) return reply(200, { results: [] });
+    if (url.endsWith('/objects/contacts') && opts.method === 'POST') return reply(201, { id: '101' });
+    return reply(500, {});
+  });
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));
+  t.eq(r.results, [{ email: 'dana.levi@vantelopay.com', action: 'created', id: '101' }]);
+  const create = calls.find((c) => c.url.endsWith('/objects/contacts'));
+  t.eq([create.body.properties.lifecyclestage, create.body.properties.grain_conference_summary], ['lead', 'Warming - act now · 3 meetings']);
+  t.eq(calls.filter((c) => c.url.endsWith('/properties/contacts')).length, 2);
+});
+test('hubspot: existing contact -> updated, lifecycle stage untouched', async () => {
+  fakeFetch((url) => {
+    if (url.includes('/properties/contacts/')) return reply(200, {});
+    if (url.endsWith('/search')) return reply(200, { results: [{ id: '55' }] });
+    if (url.endsWith('/objects/contacts/55')) return reply(200, { id: '55' });
+    return reply(500, {});
+  });
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));
+  t.eq(r.results[0].action, 'updated');
+  t.ok(!('lifecyclestage' in calls.find((c) => c.method === 'PATCH').body.properties), 'no stage on update');
+});
+test('hubspot: created a moment ago (409 on create) -> updates the existing id', async () => {
+  fakeFetch((url, opts) => {
+    if (url.includes('/properties/contacts/')) return reply(200, {});
+    if (url.endsWith('/search')) return reply(200, { results: [] });
+    if (url.endsWith('/objects/contacts') && opts.method === 'POST') return reply(409, { message: 'Contact already exists. Existing ID: 77' });
+    if (url.endsWith('/objects/contacts/77')) return reply(200, { id: '77' });
+    return reply(500, {});
+  });
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [dana] })));
+  t.eq([r.results[0].action, r.results[0].id], ['updated', '77']);
+});
+test('hubspot: bad token -> hubspot_auth', async () => {
+  fakeFetch(() => reply(401, {}));
+  t.eq(parse(await hubspot.handler(post({ token: 'bad', contacts: [dana] }))).error, 'hubspot_auth');
+});
+test('hubspot: contact without email is reported, not sent', async () => {
+  fakeFetch((url) => (url.includes('/properties/') ? reply(200, {}) : reply(500, {})));
+  const r = parse(await hubspot.handler(post({ token: 'tok', contacts: [{ ...dana, email: '' }] })));
+  t.eq(r.results[0], { email: '', action: 'error', message: 'No email' });
 });
 
 // Run async tests one by one, then report like tests/run.mjs.

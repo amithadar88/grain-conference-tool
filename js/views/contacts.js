@@ -1,7 +1,7 @@
-// Contacts tab: list, contact page (timeline + signal), AI summary.
-import { relationshipSignal, timelineMarkers } from '../signals.js';
+// Contacts tab: list, contact page (timeline + signal), AI summary, HubSpot push, CSV.
+import { relationshipSignal, timelineMarkers, hubspotPayload, contactsCsv } from '../signals.js';
 import { validateArc } from '../validate.js';
-import { aiArc } from '../api.js';
+import { aiArc, hubspotPush } from '../api.js';
 import { esc, fmtDate, signalClass } from './ui.js';
 
 let query = '';
@@ -18,10 +18,17 @@ export function render(el, ctx, personId) {
   if (personId) return renderPerson(el, ctx, personId);
   const { store } = ctx;
   const rows = rowsFor(store, ctx.today);
+  const unpushed = rows.filter((r) => r.person.email && !store.hubspotPushed(r.person.id));
 
   el.innerHTML = `<section class="view">
-  <div class="view-head"><h2>Contacts</h2></div>
+  <div class="view-head"><h2>Contacts</h2>
+    <div class="row">
+      <button class="btn" id="push-all" data-needs-net ${unpushed.length ? '' : 'data-blocked="true"'}>Push all not yet pushed (${unpushed.length})</button>
+      <button class="btn" id="csv">Export CSV</button>
+    </div></div>
+  <p class="needs-net-hint" hidden>HubSpot push needs a connection.</p>
   <input type="search" id="q" placeholder="Search name or company…" value="${esc(query)}" aria-label="Search contacts" style="margin:8px 0">
+  <div id="push-result"></div>
   <ul class="rows" id="list"></ul>
 </section>`;
 
@@ -40,6 +47,47 @@ export function render(el, ctx, personId) {
   el.querySelector('#q').addEventListener('input', (e) => { query = e.target.value; draw(); });
   draw();
 
+  el.querySelector('#csv').addEventListener('click', () => downloadCsv(rows, ctx.today));
+  el.querySelector('#push-all').addEventListener('click', () => pushRows(ctx, unpushed, el.querySelector('#push-result'), () => render(el, ctx)));
+}
+
+function downloadCsv(rows, today) {
+  const blob = new Blob(['\uFEFF' + contactsCsv(rows)], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `grain-leads-${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Push in batches of 10 (the function has ~10 seconds). Demo mode without a token.
+async function pushRows(ctx, rows, out, done) {
+  const { store } = ctx;
+  const token = store.settings().hubspotToken;
+  const payloads = rows.filter((r) => r.person.email).map((r) => ({ id: r.person.id, payload: hubspotPayload(r.person, r.encounters, r.signal) }));
+  const skipped = rows.filter((r) => !r.person.email).map((r) => r.person.name);
+  if (!token) {
+    out.innerHTML = `<div class="box"><b>Demo mode: nothing was sent.</b> Add a HubSpot token in Settings to push for real. This is exactly what would be sent:
+      <pre>${esc(JSON.stringify(payloads.map((p) => p.payload), null, 2))}</pre>
+      ${skipped.length ? `<p class="hint">Skipped (no email): ${esc(skipped.join(', '))}</p>` : ''}</div>`;
+    return;
+  }
+  out.innerHTML = '<p class="muted">Pushing to HubSpot…</p>';
+  const lines = [];
+  for (let i = 0; i < payloads.length; i += 10) {
+    const batch = payloads.slice(i, i + 10);
+    const r = await hubspotPush(token, batch.map((b) => b.payload));
+    if (!r.ok) { lines.push(`Error: ${r.message}`); break; }
+    r.results.forEach((res, j) => {
+      if (res.action === 'error') lines.push(`${res.email}: ${res.message || 'error'}`);
+      else { store.markPushed(batch[j].id, ctx.today); lines.push(`${res.email}: ${res.action}`); }
+    });
+  }
+  if (skipped.length) lines.push(`Skipped (no email): ${skipped.join(', ')}`);
+  out.innerHTML = `<div class="box"><b>HubSpot</b><ul>${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>`;
+  if (done && lines.every((l) => !l.startsWith('Error'))) setTimeout(done, 1500);
 }
 
 function renderPerson(el, ctx, personId) {
@@ -49,6 +97,7 @@ function renderPerson(el, ctx, personId) {
   const encounters = store.encountersFor(personId);
   const signal = relationshipSignal(encounters, ctx.today);
   const unresolved = store.unresolvedFor(personId).map((id) => store.person(id)).filter(Boolean);
+  const pushed = store.hubspotPushed(personId);
 
   el.innerHTML = `<section class="view">
   <p><a href="#contacts">← Contacts</a></p>
@@ -85,6 +134,16 @@ function renderPerson(el, ctx, personId) {
       <button class="btn" type="submit">Save details</button>
     </form>
   </details>
+
+  <div class="box"><b>HubSpot</b> ${pushed ? `<span class="hint">Pushed ✓ ${esc(fmtDate(pushed))}</span>` : ''}
+    <div class="row" style="margin-top:8px">
+      ${person.email
+    ? `<button class="btn" id="push" data-needs-net>${pushed ? 'Push again' : 'Push to HubSpot'}</button>`
+    : '<button class="btn" disabled>Add an email to push</button>'}
+    </div>
+    <p class="needs-net-hint" hidden>Needs connection.</p>
+    <div id="push-result"></div>
+  </div>
 </section>`;
 
   el.querySelectorAll('[data-same]').forEach((b) => b.addEventListener('click', () => {
@@ -101,6 +160,13 @@ function renderPerson(el, ctx, personId) {
     renderPerson(el, ctx, personId);
     ctx.applyNet();
   });
+  const pushBtn = el.querySelector('#push');
+  if (pushBtn) {
+    pushBtn.addEventListener('click', () => pushRows(ctx, [{ person, encounters, signal }], el.querySelector('#push-result'), () => {
+      renderPerson(el, ctx, personId);
+      ctx.applyNet();
+    }));
+  }
   renderAi(el.querySelector('#ai'), ctx, person, encounters, signal);
 }
 
