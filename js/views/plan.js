@@ -57,7 +57,10 @@ export function render(el, ctx) {
   <div class="gaps"><b>Gaps</b><ul>${gapLines(gaps).map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
   <div class="timeline">${timelineHTML()}</div>
   <dialog class="sheet" id="detail" aria-label="Event details">
-    <div class="sheet-inner"><button type="button" class="sheet-close" aria-label="Close">✕</button><div class="sheet-body"></div></div>
+    <div class="sheet-inner">
+      <div class="sheet-head"><b class="sheet-title"></b><button type="button" class="sheet-close" aria-label="Close">✕</button></div>
+      <div class="sheet-body"></div>
+    </div>
   </dialog>
 </section>`;
 
@@ -69,6 +72,7 @@ export function render(el, ctx) {
   let openId = null;
   const drawDetail = () => {
     const s = scoreAll(store.conferences()).find((x) => x.id === openId);
+    dialog.querySelector('.sheet-title').textContent = s ? s.conf.name : '';
     body.innerHTML = s ? eventCardHTML(s, { plan: store.conferencePlan(s.id), team: store.team(), today: ctx.today, open: true }) : '';
   };
   const redrawTimeline = () => {
@@ -83,7 +87,7 @@ export function render(el, ctx) {
     openId = card.dataset.open;
     drawDetail();
     dialog.showModal();
-    body.scrollTop = 0;
+    dialog.querySelector('.sheet-inner').scrollTop = 0;
   });
   bindEventCardControls(body, store, () => { drawDetail(); redrawTimeline(); });
   dialog.querySelector('.sheet-close').addEventListener('click', () => dialog.close());
