@@ -55,6 +55,7 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 
 /* Event card */
 .card { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--t-c); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+.card { scroll-margin-top: 64px; } /* jumping to a card keeps its title below the sticky header */
 .card.past { opacity: .55; }
 .card-head { display: flex; justify-content: space-between; gap: 12px; }
 .meta { color: var(--muted); font-size: .9rem; }
@@ -73,6 +74,12 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 .chip[aria-pressed="true"] { background: var(--brand); color: #fff; border-color: var(--brand); }
 details summary { cursor: pointer; font-weight: 600; color: var(--brand); padding: 6px 0; min-height: 36px; }
 .why ul { margin: 0; padding-left: 18px; }
+.oneliner { font-size: .9rem; margin-top: 2px; }
+.pc { border-radius: 8px; border-left: 4px solid; padding: 8px 12px; margin: 8px 0; }
+.pc h4 { margin: 0 0 4px; }
+.pc.pros { background: #e9f6ee; border-color: #2e8b57; } .pc.pros h4 { color: #14532d; }
+.pc.cons { background: #fff4de; border-color: #c98a00; } .pc.cons h4 { color: #7a4d00; }
+.pc.drag { background: #fdecec; border-color: #b3261e; color: #7f1d1d; }
 .ratings { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0; }
 .ratings td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
 .tier-aplus { border-left-color: var(--t-aplus); } .tier-a { border-left-color: var(--t-a); } .tier-b { border-left-color: var(--t-b); }

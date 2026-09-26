@@ -93,6 +93,22 @@ export function explain(conf) {
   return { points: pts, pros, cons, drag };
 }
 
+// A reason, shortened for the card: no brackets, first clause only, at most 45 characters.
+export function shortWhy(why, max = 45) {
+  const text = String(why || '').replace(/\s*\([^)]*\)/g, '').trim();
+  const clause = text.split(/[;:,] | [-–—] /)[0].trim();
+  if (clause.length <= max) return clause;
+  const cut = clause.slice(0, max - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[\s,;:]+$/, '')}…`;
+}
+
+// "✅ Densest PSP room · 🔻 Drag: Audience size": the strongest pro (most points among the 4-5s)
+// and the biggest drag, from one scoreAll() item. No AI, no manual writing.
+export function oneLineSummary(s) {
+  const best = s.pros.reduce((a, p) => (!a || s.points[p.factor] > s.points[a.factor] ? p : a), null);
+  return [best && `✅ ${shortWhy(best.why)}`, s.drag && `🔻 Drag: ${s.drag.label}`].filter(Boolean).join(' · ');
+}
+
 // Dates are 'YYYY-MM-DD'; convert to whole days so time zones never matter.
 export function dayNumber(iso) {
   return Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000;

@@ -1,6 +1,7 @@
 import {
   scoreAll, roundScore, tierFor, sizeRating, borderline, findGaps, filterEvents,
   defaultCaptureConference, runningToday, gapDays, windowMonths, monthLabel,
+  shortWhy, oneLineSummary,
 } from '../js/scoring.js';
 
 export default function scoringTests(t, data) {
@@ -106,5 +107,41 @@ export default function scoringTests(t, data) {
   t.test('During Money20/20 Europe, it is the one running today', () => {
     const c = byId('money2020-europe-2027').conf;
     t.eq(defaultCaptureConference(confs, c.startDate).id, 'money2020-europe-2027');
+  });
+
+  t.group('One-line summary on the card');
+
+  const conf = (scores, whys = {}) => ({
+    id: 'x', name: 'X', region: 'Europe', startDate: '2027-01-10', endDate: '2027-01-11',
+    ratings: Object.fromEntries(['icpFit', 'buyerAccess', 'audienceMarket', 'audienceSize', 'travelEffort']
+      .map((k, i) => [k, { score: scores[i], why: whys[k] || `${k} reason` }])),
+  });
+  const one = (c) => oneLineSummary(scoreAll([c])[0]);
+
+  t.test('Short why: drop brackets, keep the first clause', () => {
+    t.eq([
+      shortWhy('Very senior banking executives; meetings are possible but mostly bank-to-bank'),
+      shortWhy('30,000+ attendees (diminishing returns)'),
+      shortWhy('50,000+ double opt-in 1:1 meetings; 1,000+ CEOs and founders'),
+      shortWhy('UK and European travel trade, Grain\'s home market'),
+    ], ['Very senior banking executives', '30,000+ attendees', '50,000+ double opt-in 1:1 meetings', 'UK and European travel trade']);
+  });
+  t.test('Short why: long clauses are cut at a word, max 45 characters', () => {
+    const s = shortWhy('Money transfer operators and cross-border payment companies: the densest ICP room in the list');
+    t.eq(s, 'Money transfer operators and cross-border…');
+    t.ok(s.length <= 45, 'at most 45 characters');
+  });
+  t.test('Strongest pro (most points among 4-5s) + biggest drag', () => {
+    // buyerAccess 5 earns 30 pts, icpFit 4 earns 26.25: buyer access wins. Drag = audience market (rated 1, -15).
+    t.eq(one(conf([4, 5, 1, 3, 4], { buyerAccess: 'Hosted buyers and CFOs; very senior' })), '✅ Hosted buyers and CFOs · 🔻 Drag: Audience market');
+  });
+  t.test('No pros -> only the drag', () => {
+    t.eq(one(conf([3, 3, 1, 3, 3])), '🔻 Drag: ICP fit');
+  });
+  t.test('All 5s (no drag) -> only the pro', () => {
+    t.eq(one(conf([5, 5, 5, 5, 5], { icpFit: 'All PSPs' })), '✅ All PSPs');
+  });
+  t.test('Real data: IAMTN', () => {
+    t.eq(oneLineSummary(byId('iamtn-summit-2026')).startsWith('✅ Money transfer operators and cross-border… · 🔻 Drag: '), true);
   });
 }

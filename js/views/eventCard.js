@@ -1,5 +1,5 @@
 // The event card, shared by Events, Plan detail and the Add-conference review screen.
-import { FACTORS, FACTOR_LABELS } from '../scoring.js';
+import { FACTORS, FACTOR_LABELS, oneLineSummary } from '../scoring.js';
 import { esc, safeUrl, fmtRange, fmtDate, tierClass } from './ui.js';
 
 const STATUSES = [['going', 'Going'], ['considering', 'Considering'], ['skip', 'Skip']];
@@ -39,14 +39,15 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
     <div class="score" title="Score out of 100"><span class="tier">${esc(s.tier)}</span><span class="num">${s.score}</span></div>
   </div>
   <div class="action">${esc(s.action)}</div>
+  <div class="oneliner">${esc(oneLineSummary(s))}</div>
   <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterText ? `<span class="badge cluster">${esc(clusterText)}</span>` : ''}${provenance(c)}</div>
   ${controls ? `<div class="plan-row">${statusButtons}<select data-rep data-id="${esc(c.id)}" aria-label="Assigned rep">${repOptions}</select></div>` : ''}
   <details${open ? ' open' : ''}>
     <summary>Why ${esc(s.tier)}?</summary>
     <div class="why">
-      <h4>Pros</h4><ul>${listItems(s.pros, 'No factor rated 4-5')}</ul>
-      <h4>Cons</h4><ul>${listItems(s.cons, 'No factor rated 1-2')}</ul>
-      <p><b>Biggest drag:</b> ${s.drag ? esc(s.drag.text) : 'none'}</p>
+      <div class="pc pros"><h4>✅ Pros</h4><ul>${listItems(s.pros, 'No factor rated 4-5')}</ul></div>
+      <div class="pc cons"><h4>⚠️ Cons</h4><ul>${listItems(s.cons, 'No factor rated 1-2')}</ul></div>
+      <p class="pc drag"><b>🔻 Biggest drag:</b> ${s.drag ? esc(s.drag.text) : 'none'}</p>
       <table class="ratings"><tbody>${FACTORS.map((k) => `<tr><td>${esc(FACTOR_LABELS[k])}</td><td>${c.ratings[k].score}/5</td><td>${Math.round(s.points[k] * 10) / 10} pts</td><td>${esc(c.ratings[k].why)}</td></tr>`).join('')}
         ${s.bonus ? `<tr><td>Cluster bonus</td><td></td><td>+5 pts</td><td>${esc(s.cluster.name)}</td></tr>` : ''}</tbody></table>
       ${c.description ? `<p>${esc(c.description)}</p>` : ''}
