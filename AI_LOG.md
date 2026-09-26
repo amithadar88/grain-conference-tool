@@ -23,6 +23,7 @@ Where AI tools helped vs. got in the way. Feeds the "how I used AI" part of the 
 | 17 | Design | Second Claude chat as reviewer | Reviewed the spec and caught that seed data copied into localStorage would never update for existing users, and that Sibos fell outside the planning window. | Helped: one AI reviewing another |
 | 18 | Planning | Claude Code | Before writing the plan, prototyped the whole app and ran it (89 logic tests, 19 function tests with a fake network, scripted capture flows). This caught two of its own wrong assumptions: MPE's nearest cluster partner is DACT (overlapping dates), not ITB Berlin; and the page title was being read twice when turning a web page into text. | Helped |
 | 19 | Planning | Claude Code | Its headless-Chrome checks, launched from VS Code, triggered a macOS "App Management" permission prompt it hadn't warned me about. I denied it; nothing was installed. New rule: ask before launching or installing anything. | Got in the way |
+| 20 | Build | Claude Code | Followed the plan's "push to main after every task" rule, and every push was a Netlify production deploy: half the free plan's monthly credits gone in one day. Switched to a `dev` branch for backups (Netlify only deploys `main`) and about 3 planned deploys: before live-testing AI + HubSpot, after polish, final. Lesson: a "free" host still has a meter; check it before choosing a deploy rhythm. | Got in the way |
 
 ## Notes for the video
 -
