@@ -350,9 +350,10 @@ closing, or polite tire-kicker?
   label set. Six labels stay canonical everywhere (Today, Contacts, HubSpot payload).
 - **A stale AI summary still counts** for Act-now: it's the last judgment the team
   actually has, and a new encounter just means "worth a fresh look," not "ignore this."
-- **Evaluator guide strip:** looks up its targets (Ahmed Hassan, the first A+ event) by
-  query against live data rather than hardcoded ids, so it never links to something that
-  moved or was edited; if a target isn't found, that guide line is silently skipped.
+- **Welcome card, not an evaluator crib sheet:** the first-run strip is static onboarding
+  copy — one line per section (Events, Plan, Capture, Contacts) explaining what it does,
+  with a link into it — instead of scripted steps naming specific demo records. It reads
+  like product onboarding regardless of who opens the app or what's in the data.
   Dismissal lives in the store overlay, so it comes back after "Reset demo data" — the
   same mechanism as every other piece of team-changed state.
 - **Trade-off:** the app no longer auto-opens Capture when a conference is running today

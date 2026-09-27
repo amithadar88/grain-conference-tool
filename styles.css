@@ -234,7 +234,10 @@ body:has(dialog[open]) { overflow: hidden; }
 pre { white-space: pre-wrap; word-break: break-word; background: #f3f5fb; padding: 10px; border-radius: 8px; font-size: .8rem; }
 
 /* Today */
-.guide ol { margin: 6px 0; padding-left: 18px; }
+.welcome-rows { list-style: none; margin: 6px 0 8px; padding: 0; }
+.welcome-rows li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+.welcome-rows li:first-child { border-top: none; }
+.welcome-rows a { font-weight: 600; font-size: .85rem; white-space: nowrap; }
 .fu { display: inline-block; }
 .fu .box { margin: 8px 0 0; }
 .mini.next-trip { background: var(--brand-2); border-left-width: 6px; padding: 10px 12px; margin-bottom: 10px; }

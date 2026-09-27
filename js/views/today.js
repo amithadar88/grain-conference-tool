@@ -1,36 +1,29 @@
 // Today tab: the default landing page. "What should I do right now?" — all rules-based
 // except the follow-up draft button, which reuses the same AI call as the contact page.
 import { actNowRows, comingUpRows, yourNextTrip, nextTeamTrips } from '../today.js';
-import { scoreAll } from '../scoring.js';
 import { computeGaps } from '../gaps.js';
 import { peopleYouKnow } from '../eventHistory.js';
 import { staffingChip } from './plan.js';
 import { renderFollowup } from './followup.js';
 import { esc, fmtRange, signalClass, tierClass } from './ui.js';
 
-const GUIDE_STEPS = [
-  {
-    text: 'Open Ahmed Hassan and generate the AI summary: it disagrees with the rules',
-    find: (store) => store.people().find((p) => p.name === 'Ahmed Hassan'),
-    href: (p) => `#contacts/${encodeURIComponent(p.id)}`,
-  },
-  { text: 'Go to Capture and type "dana levy"', find: () => true, href: () => '#capture' },
-  {
-    text: 'Open "Why A+?" on any event',
-    find: (store) => scoreAll(store.conferences()).find((s) => s.tier === 'A+'),
-    href: (s) => `#events/${encodeURIComponent(s.id)}`,
-  },
+// Onboarding, not an evaluator crib sheet: static copy about what each section does,
+// no lookups against demo data.
+const WELCOME_ROWS = [
+  { title: 'Events', desc: "Every conference scored for Grain's ICP, with the reasons behind each score.", link: 'Browse events', href: '#events' },
+  { title: 'Plan', desc: "Who covers what across the year, and where we're under-invested.", link: 'Open the plan', href: '#plan' },
+  { title: 'Capture', desc: "Log a lead in seconds on the show floor, even offline. It recognizes people you've met before.", link: 'Capture a lead', href: '#capture' },
+  { title: 'Contacts', desc: 'See which relationships are warming up and which are just listening, with an AI read of your notes.', link: 'View contacts', href: '#contacts' },
 ];
 
 function guideHTML(store) {
   if (store.guideDismissed()) return '';
-  const items = GUIDE_STEPS.map((s) => {
-    const found = s.find(store);
-    return found ? `<li><a href="${s.href(found)}">${esc(s.text)}</a></li>` : '';
-  }).filter(Boolean);
-  if (!items.length) return '';
-  return `<div class="box guide" id="guide"><b>New here? Try this</b><ol>${items.join('')}</ol>
-    <button class="link" type="button" id="guide-dismiss">Dismiss</button></div>`;
+  return `<div class="box guide" id="guide"><b>Welcome to Grain Conferences</b>
+    <ul class="welcome-rows">${WELCOME_ROWS.map((r) => `<li>
+      <div><b>${esc(r.title)}</b> <span class="hint">${esc(r.desc)}</span></div>
+      <a href="${esc(r.href)}">${esc(r.link)} →</a>
+    </li>`).join('')}</ul>
+    <button class="link" type="button" id="guide-dismiss">Got it</button></div>`;
 }
 
 function actNowHTML(rows) {

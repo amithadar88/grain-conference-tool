@@ -13,7 +13,7 @@ export function emptyOverlay() {
     unresolvedMatches: {}, // { [newPersonId]: [candidateId, ...] }
     aiSummaries: {},       // { [personId]: summary } overrides seed aiSummaries
     hubspotPushed: {},     // { [personId]: 'YYYY-MM-DD' }
-    guideDismissed: false, // Today page "New here? Try this" strip
+    guideDismissed: false, // Today page "Welcome to Grain Conferences" card
   };
 }
 
