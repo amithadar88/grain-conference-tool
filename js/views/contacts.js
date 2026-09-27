@@ -9,6 +9,12 @@ let query = '';
 let sortMode = 'urgency'; // 'urgency' | 'name' | 'recent'
 let filterBucket = ''; // '' (All) | 'Warming' | 'Cooling' | 'Stalled' | 'Steady' | 'New'
 
+// AI summaries in flight, personId -> the request's own promise, so navigating away and
+// back shows "Generating…" instead of a fresh "Generate" button — the request itself
+// keeps running either way (nothing here cancels it); the result lands in the store
+// (store.setAiSummary) whichever page happens to be open when it arrives.
+const pendingArc = new Map();
+
 // "Warming - act now" -> "Warming" (matches signalClass's own bucketing, used for filter chips).
 const labelBucket = (label) => label.split(' ')[0];
 const lastDate = (r) => r.encounters.at(-1).date;
@@ -260,8 +266,9 @@ function renderAi(box, ctx, person, encounters, signal) {
   const { store } = ctx;
   if (encounters.length < 2) { box.innerHTML = ''; return; }
   const s = store.aiSummary(person.id);
+  const generating = pendingArc.has(person.id);
   const stale = s && s.basedOnEncounters < encounters.length;
-  const showButton = !s || stale;
+  const showButton = !generating && (!s || stale);
   const body = s
     ? `<span class="sig ${signalClass(s.label)}">${esc(s.label)}</span>
        ${s.agreesWithRules ? '' : `<p class="disagree">AI disagrees with the rules (${esc(signal.label)}): ${esc(s.disagreementReason)}</p>`}
@@ -270,30 +277,45 @@ function renderAi(box, ctx, person, encounters, signal) {
        <p class="hint">AI · ${esc(fmtDate(s.generatedAt))} · based on ${s.basedOnEncounters} meetings${stale ? ' · new meeting since this summary' : ''}</p>`
     : '<p class="hint">AI reads the meeting notes and judges whether this is warming or a tire-kicker.</p>';
   box.innerHTML = `<div class="box ai${stale ? ' stale' : ''}"><b>AI summary</b>${body}
+    ${generating ? '<p class="hint">Generating…</p>' : ''}
     ${showButton ? `<button class="btn" id="ai-btn" data-needs-net>${s ? 'Regenerate AI summary' : 'Generate'}</button>
     <span class="needs-net-hint" hidden>Needs connection</span>` : ''}<p class="error" id="ai-err" hidden></p></div>`;
+  if (generating) {
+    // Came back to this contact while its summary was still generating elsewhere: redraw
+    // once it lands, whether that's this same box or a fresh one from a later visit.
+    pendingArc.get(person.id).then(() => renderAi(box, ctx, person, encounters, signal));
+    return;
+  }
   const btn = box.querySelector('#ai-btn');
   if (!btn) return;
-  btn.addEventListener('click', async () => {
+  btn.addEventListener('click', () => {
     btn.disabled = true;
     btn.textContent = 'Thinking…';
-    const r = await aiArc(store.settings().geminiKey, {
+    const request = aiArc(store.settings().geminiKey, {
       person: { name: person.name, company: person.company, title: person.title },
       encounters: encounters.map((e) => ({ date: e.date, event: e.event, name: e.nameAsEntered, company: e.company, title: e.title, temperature: e.temperature, note: e.note })),
       rules: { label: signal.label, reasons: signal.reasons },
       today: ctx.today,
-    }, () => { btn.textContent = 'Taking longer than usual, retrying…'; });
-    const err = box.querySelector('#ai-err');
-    const check = r.ok ? validateArc(r.result) : null;
-    if (!r.ok || !check.ok) {
-      err.textContent = r.ok ? "The AI's answer didn't make sense: try again." : r.message;
-      err.hidden = false;
-      btn.disabled = false;
-      btn.textContent = s ? 'Regenerate AI summary' : 'Generate';
-      return;
-    }
-    store.setAiSummary(person.id, { ...r.result, generatedAt: ctx.today, basedOnEncounters: encounters.length, model: r.model });
-    renderAi(box, ctx, person, encounters, signal);
-    ctx.applyNet();
+    }, () => { btn.textContent = 'Taking longer than usual, retrying…'; }).then((r) => {
+      pendingArc.delete(person.id);
+      const check = r.ok ? validateArc(r.result) : null;
+      if (!r.ok || !check.ok) {
+        // Only meaningful if the rep is still on this exact page; if they've navigated
+        // away, the next visit's renderAi() just sees "not generating any more" and
+        // offers Generate again, same as a failed attempt they never started.
+        if (btn.isConnected) {
+          const err = box.querySelector('#ai-err');
+          err.textContent = r.ok ? "The AI's answer didn't make sense: try again." : r.message;
+          err.hidden = false;
+          btn.disabled = false;
+          btn.textContent = s ? 'Regenerate AI summary' : 'Generate';
+        }
+        return;
+      }
+      store.setAiSummary(person.id, { ...r.result, generatedAt: ctx.today, basedOnEncounters: encounters.length, model: r.model });
+      renderAi(box, ctx, person, encounters, signal); // no-op if this box has since been replaced
+      ctx.applyNet();
+    });
+    pendingArc.set(person.id, request);
   });
 }
