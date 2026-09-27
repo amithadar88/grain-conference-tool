@@ -117,6 +117,17 @@ export default function eventHistoryTests(t, data) {
     t.eq(group.rows.map((r) => r.person.name).sort(), ['Amir Suffix A', 'Amir Suffix B']);
   });
 
+  t.test('group heading shows the most recently written variant, even when it is the shorter one', () => {
+    const store = fresh();
+    const c = conf(store, 'wtm-london-2026');
+    const base = { conferenceId: null, event: 'WTM London', title: '', email: '', linkedin: '', temperature: 'warm', note: '', rep: 'Maya' };
+    store.saveCapture({ ...base, name: 'Older Encounter', date: '2024-01-01', company: 'Globex Travel GmbH' }, {});
+    store.saveCapture({ ...base, name: 'Newer Encounter', date: '2025-06-01', company: 'Globex Travel' }, {});
+    const rows = peopleYouKnow(c, store, TODAY);
+    const group = companyGroups(rows).find((g) => g.rows.some((r) => r.person.name === 'Newer Encounter'));
+    t.eq(group.company, 'Globex Travel', "the newer (2025) row's spelling wins over the older (2024) one, regardless of insertion order");
+  });
+
   t.test('a contact with no company on file gets its own group instead of being dropped, and is not counted as a company', () => {
     const base = fresh();
     const baseCount = companyCount(peopleYouKnow(conf(base, 'wtm-london-2026'), base, TODAY));

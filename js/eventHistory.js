@@ -72,21 +72,26 @@ export function peopleYouKnow(conf, store, today) {
 /**
  * Groups a peopleYouKnow() list by company, using the same normalisation as person
  * matching (matching.js's normCompany) so suffix variants ("Acme Corp" / "Acme Corp
- * Ltd") land in one group instead of two. Rows with no company on file get their own
- * group at the end rather than being dropped from the list. Sorted by each group's most
- * recently met contact, since the input is already most-recent-first.
+ * Ltd") land in one group instead of two. The heading shown for a group is the company
+ * as written on its most recently dated encounter — picked explicitly per group, not
+ * assumed from input order, so a tie or a future reordering can't surface a stale or
+ * less-complete spelling. Rows with no company on file get their own group at the end
+ * rather than being dropped from the list. Groups are sorted by their most recently met
+ * contact, since the input is already most-recent-first.
  */
 export function companyGroups(rows) {
-  const groups = new Map(); // normCompany key ('' = unknown) -> { company: display name, rows: [] }
+  const groups = new Map(); // normCompany key ('' = unknown) -> rows sharing it
   for (const r of rows) {
     const key = normCompany(r.company);
-    if (!groups.has(key)) groups.set(key, { company: r.company || '', rows: [] });
-    groups.get(key).rows.push(r);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
   }
-  const known = [...groups.entries()].filter(([key]) => key).map(([, g]) => g)
-    .sort((a, b) => b.rows[0].lastDate.localeCompare(a.rows[0].lastDate));
-  const unknown = groups.get('');
-  return unknown ? [...known, unknown] : known;
+  const mostRecent = (groupRows) => groupRows.reduce((latest, r) => (r.lastDate > latest.lastDate ? r : latest));
+  const known = [...groups.entries()].filter(([key]) => key)
+    .map(([, groupRows]) => ({ company: mostRecent(groupRows).company || '', rows: groupRows }))
+    .sort((a, b) => mostRecent(b.rows).lastDate.localeCompare(mostRecent(a.rows).lastDate));
+  const unknownRows = groups.get('');
+  return unknownRows ? [...known, { company: '', rows: unknownRows }] : known;
 }
 
 // Distinct companies represented in a peopleYouKnow() list — for the "🏢 N companies" chip.

@@ -67,14 +67,11 @@ const peopleBadgeHTML = (rows) => {
   return label ? `<span class="badge people" title="Not part of the score">${label}</span>` : '';
 };
 
-const peopleListHTML = (rows) => (rows.length
-  ? `<div class="pc people"><h4>👥 People you know <span class="hint">(not part of the score)</span></h4>
-      ${companyGroups(rows).map((g) => `<div class="people-group">
-        <b>${esc(g.company || 'Company unknown')}</b>
-        <ul>${g.rows.map((r) => `<li><a href="#contacts/${encodeURIComponent(r.person.id)}">${esc(r.person.name)}</a>
-          · <span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span></li>`).join('')}</ul>
-      </div>`).join('')}</div>`
-  : '');
+const peopleListHTML = (rows) => companyGroups(rows).map((g) => `<div class="people-group">
+    <b>${esc(g.company || 'Company unknown')}</b>
+    <ul>${g.rows.map((r) => `<li><a href="#contacts/${encodeURIComponent(r.person.id)}">${esc(r.person.name)}</a>
+      · <span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span></li>`).join('')}</ul>
+  </div>`).join('');
 
 /**
  * s: one item from scoreAll(). opts: { plan, team, today, controls, open }
@@ -112,9 +109,12 @@ export function eventCardHTML(s, { plan = { status: null, reps: [] }, team = [],
       ${c.audienceSize ? `<p class="muted">~${Number(c.audienceSize).toLocaleString('en-US')} attendees · ${esc((c.verticals || []).join(', '))}</p>` : ''}
       ${c.notes ? `<p class="muted">${esc(c.notes)}</p>` : ''}
       ${site ? `<p><a href="${esc(site)}" target="_blank" rel="noopener">Event website ↗</a></p>` : ''}
-      ${peopleListHTML(peopleYouKnow)}
     </div>
   </details>
+  ${peopleYouKnow.length ? `<details class="pc people">
+    <summary>👥 People you know</summary>
+    ${peopleListHTML(peopleYouKnow)}
+  </details>` : ''}
 </article>`;
 }
 
