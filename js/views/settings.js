@@ -1,5 +1,5 @@
 // Settings: who am I, team, keys, AI status, reset demo data.
-import { esc } from './ui.js';
+import { esc, flash } from './ui.js';
 import { aiStatus } from '../api.js';
 
 export function render(el, ctx) {
@@ -64,7 +64,7 @@ export function render(el, ctx) {
     const pre = el.querySelector('#ai-json');
     pre.textContent = json;
     pre.hidden = false;
-    try { await navigator.clipboard.writeText(json); saved.textContent = 'Copied ✓'; } catch { saved.textContent = 'Select the text below and copy it.'; }
+    try { await navigator.clipboard.writeText(json); flash('✓ Copied'); } catch { saved.textContent = 'Select the text below and copy it.'; }
   });
 
   const statusEl = el.querySelector('#ai-status');
