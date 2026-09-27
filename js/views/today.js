@@ -16,14 +16,28 @@ const WELCOME_ROWS = [
   { title: 'Contacts', desc: 'See which relationships are warming up and which are just listening, with an AI read of your notes.', link: 'View contacts', href: '#contacts' },
 ];
 
+// Collapsed by default to save space on mobile; kept between tab switches like Events'
+// and Plan's own filter state, not persisted (a reappeared card — after Reset demo data —
+// always starts collapsed again).
+let guideExpanded = false;
+
 function guideHTML(store) {
   if (store.guideDismissed()) return '';
-  return `<div class="box guide" id="guide"><b>Welcome to Grain Conferences</b>
-    <ul class="welcome-rows">${WELCOME_ROWS.map((r) => `<li>
-      <div><b>${esc(r.title)}</b> <span class="hint">${esc(r.desc)}</span></div>
-      <a href="${esc(r.href)}">${esc(r.link)} →</a>
-    </li>`).join('')}</ul>
-    <button class="link" type="button" id="guide-dismiss">Got it</button></div>`;
+  const rows = guideExpanded
+    ? `<ul class="welcome-rows">${WELCOME_ROWS.map((r) => `<li>
+        <div><b>${esc(r.title)}</b> <span class="hint">${esc(r.desc)}</span></div>
+        <a href="${esc(r.href)}">${esc(r.link)} →</a>
+      </li>`).join('')}</ul>
+      <div class="guide-foot"><button type="button" class="btn-gotit" id="guide-dismiss-bottom">Got it!</button></div>`
+    : '';
+  return `<div class="box guide" id="guide">
+    <div class="guide-head">
+      <b>Welcome to Grain Conferences</b>
+      <button type="button" class="guide-close" id="guide-dismiss" aria-label="Dismiss">×</button>
+    </div>
+    <button type="button" class="link" id="guide-toggle">${guideExpanded ? 'Hide' : 'See what this tool does'}</button>
+    ${rows}
+  </div>`;
 }
 
 function actNowHTML(rows) {
@@ -128,16 +142,21 @@ export function render(el, ctx) {
 
   el.innerHTML = `<section class="view">
     <h2>Today</h2>
-    ${guideHTML(store)}
+    <div id="guide-wrap">${guideHTML(store)}</div>
     ${actNowHTML(rows)}
     ${comingUpHTML(store, ctx.today)}
     ${gapsHTML(store)}
   </section>`;
 
-  el.querySelector('#guide-dismiss')?.addEventListener('click', () => {
-    store.dismissGuide();
-    el.querySelector('#guide').remove();
-  });
+  const guideWrap = el.querySelector('#guide-wrap');
+  const dismissGuide = () => { guideExpanded = false; store.dismissGuide(); drawGuide(); };
+  function drawGuide() {
+    guideWrap.innerHTML = guideHTML(store);
+    guideWrap.querySelector('#guide-dismiss')?.addEventListener('click', dismissGuide);
+    guideWrap.querySelector('#guide-dismiss-bottom')?.addEventListener('click', dismissGuide);
+    guideWrap.querySelector('#guide-toggle')?.addEventListener('click', () => { guideExpanded = !guideExpanded; drawGuide(); });
+  }
+  drawGuide();
 
   rows.forEach((r, i) => {
     const slot = el.querySelector(`[data-fu="${i}"]`);

@@ -234,6 +234,14 @@ body:has(dialog[open]) { overflow: hidden; }
 pre { white-space: pre-wrap; word-break: break-word; background: #f3f5fb; padding: 10px; border-radius: 8px; font-size: .8rem; }
 
 /* Today */
+/* Collapsible welcome card: a compact one-line row by default (title + toggle link + a
+   plain "x", no button chrome, so it reads as a dismiss corner mark, not another button)
+   to save space on mobile; the 4 rows only render once expanded. */
+.guide-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.guide-close { min-width: 32px; min-height: 32px; margin: -6px -6px -6px 0; padding: 0; border: none; background: none; color: #000; font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.guide-foot { text-align: right; margin-top: 4px; }
+.btn-gotit { padding: 7px 16px; border: none; border-radius: 8px; background: #176b3b; color: #fff; font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; } /* #176b3b on white: 6.6:1, clears WCAG AA */
+.btn-gotit:hover, .btn-gotit:focus-visible { background: #1c7a43; }
 .welcome-rows { list-style: none; margin: 6px 0 8px; padding: 0; }
 .welcome-rows li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 7px 0; border-top: 1px solid var(--line); }
 .welcome-rows li:first-child { border-top: none; }
