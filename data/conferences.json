@@ -52,6 +52,12 @@
       "city": "London",
       "country": "UK",
       "region": "Europe",
+      "defaultPlan": {
+        "status": "going",
+        "reps": [
+          "Shira"
+        ]
+      },
       "verticals": [
         "payments",
         "cross-border"
@@ -172,6 +178,13 @@
       "city": "London",
       "country": "UK",
       "region": "Europe",
+      "defaultPlan": {
+        "status": "going",
+        "reps": [
+          "Maya",
+          "Daniel"
+        ]
+      },
       "verticals": [
         "travel"
       ],
@@ -489,6 +502,12 @@
       "city": "Berlin",
       "country": "Germany",
       "region": "Europe",
+      "defaultPlan": {
+        "status": "considering",
+        "reps": [
+          "Shira"
+        ]
+      },
       "verticals": [
         "payments"
       ],
@@ -1121,6 +1140,12 @@
       "city": "Miami Beach",
       "country": "USA",
       "region": "North America",
+      "defaultPlan": {
+        "status": "considering",
+        "reps": [
+          "Yoni"
+        ]
+      },
       "verticals": [
         "payments",
         "cross-border"
@@ -1203,6 +1228,12 @@
       "city": "Amsterdam",
       "country": "Netherlands",
       "region": "Europe",
+      "defaultPlan": {
+        "status": "going",
+        "reps": [
+          "Daniel"
+        ]
+      },
       "verticals": [
         "treasury"
       ],

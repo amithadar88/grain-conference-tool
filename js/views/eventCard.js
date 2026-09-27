@@ -45,14 +45,14 @@ const peopleListHTML = (rows) => (rows.length
  * s: one item from scoreAll(). opts: { plan, team, today, controls, open }
  * Returns an HTML string. Controls are wired by bindEventCardControls().
  */
-export function eventCardHTML(s, { plan = { status: null, rep: null }, team = [], today = '', controls = true, open = false, peopleYouKnow = [] } = {}) {
+export function eventCardHTML(s, { plan = { status: null, reps: [] }, team = [], today = '', controls = true, open = false, peopleYouKnow = [] } = {}) {
   const c = s.conf;
   const past = today && c.endDate < today;
   const site = safeUrl(c.website);
   const statusButtons = STATUSES.map(([v, label]) =>
     `<button type="button" class="chip" data-status="${v}" data-id="${esc(c.id)}" aria-pressed="${plan.status === v}">${label}</button>`).join('');
-  const repOptions = ['<option value="">Assign rep…</option>', ...team.map((n) =>
-    `<option value="${esc(n)}"${plan.rep === n ? ' selected' : ''}>${esc(n)}</option>`)].join('');
+  const repChips = team.map((n) =>
+    `<button type="button" class="chip" data-rep="${esc(n)}" data-id="${esc(c.id)}" aria-pressed="${plan.reps.includes(n)}">${esc(n)}</button>`).join('');
 
   return `<article class="card tier-${tierClass(s.tier)}${past ? ' past' : ''}" id="ev-${esc(c.id)}">
   <div class="card-head">
@@ -66,7 +66,8 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
   <div class="action">${esc(s.action)}</div>
   <div class="oneliner">${esc(oneLineSummary(s))}</div>
   <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterBadgeHTML(s.cluster)}${peopleBadgeHTML(peopleYouKnow)}${provenance(c)}</div>
-  ${controls ? `<div class="plan-row">${statusButtons}<select data-rep data-id="${esc(c.id)}" aria-label="Assigned rep">${repOptions}</select></div>` : ''}
+  ${controls ? `<div class="plan-row">${statusButtons}</div>
+  <div class="plan-row reps" role="group" aria-label="Who's going">${repChips || '<span class="hint">Add team names in Settings to assign someone</span>'}</div>` : ''}
   <details${open ? ' open' : ''}>
     <summary>Why ${esc(s.tier)}?</summary>
     <div class="why">
@@ -88,17 +89,22 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
 // Event delegation: one listener on the list container. onChange() re-draws the list.
 export function bindEventCardControls(root, store, onChange) {
   root.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-status]');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const current = store.conferencePlan(id).status;
-    store.setConferencePlan(id, { status: current === btn.dataset.status ? null : btn.dataset.status });
-    onChange();
-  });
-  root.addEventListener('change', (e) => {
-    const sel = e.target.closest('[data-rep]');
-    if (!sel) return;
-    store.setConferencePlan(sel.dataset.id, { rep: sel.value || null });
-    onChange();
+    const statusBtn = e.target.closest('[data-status]');
+    if (statusBtn) {
+      const id = statusBtn.dataset.id;
+      const current = store.conferencePlan(id).status;
+      store.setConferencePlan(id, { status: current === statusBtn.dataset.status ? null : statusBtn.dataset.status });
+      onChange();
+      return;
+    }
+    const repBtn = e.target.closest('[data-rep]');
+    if (repBtn) {
+      const id = repBtn.dataset.id;
+      const name = repBtn.dataset.rep;
+      const current = store.conferencePlan(id).reps;
+      const next = current.includes(name) ? current.filter((r) => r !== name) : [...current, name];
+      store.setConferencePlan(id, { reps: next });
+      onChange();
+    }
   });
 }

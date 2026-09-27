@@ -21,7 +21,7 @@ export function eventPickerGroups(confs, planOf, me, today) {
   const sorted = [...confs].sort((a, b) => a.startDate.localeCompare(b.startDate));
   const upcoming = sorted.filter((c) => c.endDate >= today);
   return [
-    { label: 'My events', items: me ? upcoming.filter((c) => planOf(c.id).rep === me) : [] },
+    { label: 'My events', items: me ? upcoming.filter((c) => (planOf(c.id).reps || []).includes(me)) : [] },
     { label: 'Happening soon', items: upcoming.filter((c) => dayNumber(c.startDate) <= dayNumber(today) + 30) },
     { label: 'All events', items: sorted },
   ].filter((g) => g.items.length);

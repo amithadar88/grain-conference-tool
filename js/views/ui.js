@@ -35,6 +35,13 @@ export const tierClass = (tier) => (tier === 'A+' ? 'aplus' : tier.toLowerCase()
 // CSS class for a relationship label: "Warming - act now" -> "sig-warming".
 export const signalClass = (label) => `sig-${String(label).split(' ')[0].toLowerCase()}`;
 
+// "Viewing as Yoni · change in Settings" when nobody has set "I am" yet — evaluators
+// never set it, so Plan/Today still need a rep to reason about from the first open.
+export function viewingAsHTML(store) {
+  if (store.settings().me) return '';
+  return `<p class="hint">Viewing as <b>${esc(store.defaultRep())}</b> · <a href="#settings">change in Settings</a></p>`;
+}
+
 // Local date (not UTC), 'YYYY-MM-DD'.
 export function localToday(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

@@ -105,7 +105,7 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 .badge.warn { background: var(--warn-bg); color: var(--warn); }
 .badge.cluster { background: #e7effa; color: #2f6fb3; }
 .plan-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
-.plan-row select { width: auto; min-height: 36px; padding: 4px 8px; }
+.plan-row.reps { margin-top: 0; }
 .chip { min-height: 36px; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: .9rem; cursor: pointer; }
 .chip[aria-pressed="true"] { background: var(--brand); color: #fff; border-color: var(--brand); }
 /* Status colours: Going = green, Considering = amber, Skip = grey */

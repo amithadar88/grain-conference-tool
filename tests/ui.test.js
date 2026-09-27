@@ -30,21 +30,23 @@ export default function uiTests(t, data) {
 
   t.group('Plan: staffing at a glance');
 
-  t.test('Status + rep -> coloured chip text', () => {
+  t.test('Status + reps -> coloured chip text', () => {
     t.eq([
-      staffingChip({ status: 'going', rep: 'Maya' }),
-      staffingChip({ status: 'considering', rep: 'Maya' }),
-      staffingChip({ status: 'going', rep: null }),
-      staffingChip({ status: 'skip', rep: 'Maya' }),
+      staffingChip({ status: 'going', reps: ['Maya'] }),
+      staffingChip({ status: 'considering', reps: ['Maya'] }),
+      staffingChip({ status: 'going', reps: [] }),
+      staffingChip({ status: 'skip', reps: ['Maya'] }),
+      staffingChip({ status: 'going', reps: ['Maya', 'Daniel'] }),
     ], [
       { kind: 'going', text: '✓ Going · Maya' },
       { kind: 'considering', text: 'Considering · Maya' },
       { kind: 'going', text: '✓ Going' },
       { kind: 'skip', text: 'Skip · Maya' },
+      { kind: 'going', text: '✓ Going · Maya, Daniel' },
     ]);
   });
-  t.test('Rep but no decision yet -> neutral chip; nothing -> no chip', () => {
-    t.eq([staffingChip({ status: null, rep: 'Yoni' }), staffingChip({ status: null, rep: null })], [{ kind: 'rep', text: 'Yoni' }, null]);
+  t.test('Reps but no decision yet -> neutral chip; nothing -> no chip', () => {
+    t.eq([staffingChip({ status: null, reps: ['Yoni'] }), staffingChip({ status: null, reps: [] })], [{ kind: 'rep', text: 'Yoni' }, null]);
   });
 
   t.group('Cluster badge');
@@ -64,7 +66,7 @@ export default function uiTests(t, data) {
   const ids = (groups) => groups.map((g) => [g.label, g.label === 'All events' ? g.items.length : g.items.map((c) => c.id)]);
 
   t.test('My events, then Happening soon (next 30 days), then All events', () => {
-    const plans = { 'wtm-london-2026': { rep: 'Maya' }, 'sibos-2026': { rep: 'Yoni' } };
+    const plans = { 'wtm-london-2026': { reps: ['Maya'] }, 'sibos-2026': { reps: ['Yoni'] } };
     t.eq(ids(eventPickerGroups(confs, (id) => plans[id] || {}, 'Maya', '2026-09-26')), [
       ['My events', ['wtm-london-2026']],
       ['Happening soon', ['sibos-2026', 'iamtn-summit-2026', 'money2020-usa-2026', 'itb-asia-2026']],

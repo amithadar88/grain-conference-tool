@@ -4,7 +4,7 @@
 
 export function emptyOverlay() {
   return {
-    conferencePlans: {},   // { [conferenceId]: { status: 'going'|'considering'|'skip'|null, rep: string|null } }
+    conferencePlans: {},   // { [conferenceId]: { status: 'going'|'considering'|'skip'|null, reps: string[] } }
     addedConferences: [],
     addedPeople: [],
     personPatches: {},     // { [personId]: { company?, title?, email?, linkedin? } } latest known
@@ -75,17 +75,40 @@ export function createStore({ seed, storage, prefix = 'grain.' }) {
   const seedPeople = seed.contacts.people || [];
   const seedEncounters = seed.contacts.encounters || [];
 
+  // Default demo rep: whoever the team list names first among those tied for the most
+  // encounters in the demo data (evaluators never set "I am", so Plan/Today need a rep
+  // to reason about from the very first open). Computed once from seed data only, so it
+  // never drifts as the rep captures live leads during a demo.
+  const DEFAULT_REP = (() => {
+    const counts = {};
+    for (const e of seedEncounters) if (e.rep) counts[e.rep] = (counts[e.rep] || 0) + 1;
+    const team = seed.contacts.team || [];
+    let best = null;
+    for (const name of team) if (best === null || (counts[name] || 0) > (counts[best] || 0)) best = name;
+    if (best === null) [best] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0] || [''];
+    return best || '';
+  })();
+
   const api = {
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     // ---- Conferences ----
     conferences() { return [...seedConfs, ...overlay.addedConferences]; },
     conference(id) { return api.conferences().find((c) => c.id === id) || null; },
-    conferencePlan(id) { return { status: null, rep: null, ...(overlay.conferencePlans[id] || {}) }; },
+    // Seed events may carry a defaultPlan (the demo baseline, e.g. { status: 'going',
+    // reps: ['Maya'] }); the overlay always wins once the team actually changes something.
+    conferencePlan(id) {
+      const conf = api.conference(id);
+      const base = (conf && conf.defaultPlan) || {};
+      return { status: null, reps: [], ...base, ...(overlay.conferencePlans[id] || {}) };
+    },
     setConferencePlan(id, patch) {
       overlay.conferencePlans[id] = { ...api.conferencePlan(id), ...patch };
       persist();
     },
+    // "I am" in Settings, or the default demo rep if nobody has set it yet.
+    defaultRep() { return DEFAULT_REP; },
+    currentRep() { return settings.me || DEFAULT_REP; },
     addConference(conf) {
       const saved = { ...conf, id: conf.id || newId('conf') };
       overlay.addedConferences.push(saved);

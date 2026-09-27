@@ -1,16 +1,17 @@
 // Plan tab: 13-month timeline by tier, clusters, status/rep, and a short gaps list.
 import { scoreAll, findGaps, gapLines, windowMonths, monthLabel, inWindow } from '../scoring.js';
 import { peopleYouKnow } from '../eventHistory.js';
-import { esc, fmtRange, tierClass } from './ui.js';
+import { esc, fmtRange, tierClass, viewingAsHTML } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
 
 const STATUS_TEXT = { going: '✓ Going', considering: 'Considering', skip: 'Skip' };
 
 // Staffing at a glance: { kind: 'going'|'considering'|'skip'|'rep', text } or null.
-export function staffingChip({ status, rep }) {
-  if (!status && !rep) return null;
-  if (!status) return { kind: 'rep', text: rep };
-  return { kind: status, text: [STATUS_TEXT[status], rep].filter(Boolean).join(' · ') };
+export function staffingChip({ status, reps = [] }) {
+  const who = reps.join(', ');
+  if (!status && !who) return null;
+  if (!status) return { kind: 'rep', text: who };
+  return { kind: status, text: [STATUS_TEXT[status], who].filter(Boolean).join(' · ') };
 }
 
 export function render(el, ctx) {
@@ -41,6 +42,7 @@ export function render(el, ctx) {
 
   el.innerHTML = `<section class="view">
   <h2>Plan · ${monthLabel(months[0])} – ${monthLabel(months[months.length - 1])}</h2>
+  ${viewingAsHTML(store)}
   <div class="gaps"><b>Gaps</b><ul>${gapLines(gaps).map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
   <div class="timeline">${timelineHTML()}</div>
   <dialog class="sheet" id="detail" aria-label="Event details">

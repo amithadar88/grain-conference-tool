@@ -5,7 +5,7 @@ import { findGaps, gapLines, scoreAll } from '../scoring.js';
 import { peopleYouKnow } from '../eventHistory.js';
 import { staffingChip } from './plan.js';
 import { renderFollowup } from './followup.js';
-import { esc, fmtRange, signalClass, tierClass } from './ui.js';
+import { esc, fmtRange, signalClass, tierClass, viewingAsHTML } from './ui.js';
 
 const GUIDE_STEPS = [
   {
@@ -75,6 +75,7 @@ export function render(el, ctx) {
 
   el.innerHTML = `<section class="view">
     <h2>Today</h2>
+    ${viewingAsHTML(store)}
     ${guideHTML(store)}
     ${actNowHTML(rows)}
     ${comingUpHTML(store, ctx.today)}

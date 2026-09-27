@@ -392,6 +392,32 @@ closing, or polite tire-kicker?
   font, which is the "looks fine offline" requirement satisfied by construction rather
   than by an extra check.
 
+## 4d. Demo baseline: meaningful on first open
+- **Problem:** evaluators never set "I am" or touch any conference's status/rep — Plan,
+  Today and Gaps would all open empty, which tells them nothing about what the feature
+  actually does.
+- **Seed-level defaults, not a special-cased demo mode.** A handful of conferences in
+  `data/conferences.json` carry a `defaultPlan: { status, reps }` field. `conferencePlan()`
+  in `js/store.js` falls back to it when the overlay has no entry for that event, and any
+  edit the team makes (a status click, a rep chip) writes straight to the overlay as
+  before, overriding the default from then on. **"Reset demo data" restores the baseline
+  for free** — it just clears the overlay, and the seed defaults are read fresh again,
+  the same mechanism as everything else `Reset` already restored.
+- **Default demo rep, computed from the data, not hardcoded.** With no "I am" set, the
+  app acts as whichever team member the `team` list names first among those tied for the
+  most encounters in the seed contacts (`js/store.js`'s `defaultRep()`) — currently Maya,
+  Daniel and Shira are tied at 6 seed encounters each, Maya wins because she's first in
+  `contacts.json`'s `team` array. Computed once from **seed** encounters only, so it can't
+  drift as the rep captures live leads during a demo. A small "Viewing as Maya · change in
+  Settings" note appears on Today and Plan whenever "I am" is empty.
+- **The baseline itself:** WTM London 2026 (Maya + Daniel going) is the demo rep's own
+  upcoming trip, so Today's "Your next trip" (section 2) and Plan's "Mine" filter
+  (section 1) have something real to show without any setup. IAMTN (going, Shira) and
+  CrossTech World / MPE (considering) round out a few Going/Considering events. Several
+  A/A+ events (PAY360, EuroFinance, Money20/20 Europe, ITB Berlin, and others) are
+  deliberately left with no `defaultPlan`, so Gaps (section 3) has real "nobody assigned"
+  lines to show, not an empty list.
+
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
 - One addition beyond the brief: "Add conference with AI" (3b). I placed it after the
