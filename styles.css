@@ -215,6 +215,8 @@ pre { white-space: pre-wrap; word-break: break-word; background: #f3f5fb; paddin
 .guide ol { margin: 6px 0; padding-left: 18px; }
 .fu { display: inline-block; }
 .fu .box { margin: 8px 0 0; }
+.mini.next-trip { background: var(--brand-2); border-left-width: 6px; padding: 10px 12px; margin-bottom: 10px; }
+.mini.next-trip .hint { margin-top: 2px; }
 
 /* Settings / forms */
 .form { max-width: 560px; }

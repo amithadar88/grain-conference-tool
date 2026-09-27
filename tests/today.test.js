@@ -1,6 +1,6 @@
 import { createStore, memoryStorage } from '../js/store.js';
 import { dayNumber } from '../js/scoring.js';
-import { actNowRows, comingUpRows } from '../js/today.js';
+import { actNowRows, comingUpRows, yourNextTrip } from '../js/today.js';
 
 const TODAY = '2026-09-26';
 
@@ -82,5 +82,32 @@ export default function todayTests(t, data) {
     if (far) store.setConferencePlan(far.id, { status: 'going', reps: ['Maya'] });
     const r = comingUpRows(store, TODAY);
     t.eq(r.mode, 'decide');
+  });
+
+  t.group('Today: Your next trip');
+
+  t.test('The demo baseline gives Maya (the default rep) WTM London as her next trip', () => {
+    const store = fresh();
+    const trip = yourNextTrip(store, TODAY);
+    t.eq([trip.id, trip.plan.reps], ['wtm-london-2026', ['Maya', 'Daniel']]);
+  });
+  t.test('Nearest of possibly several assigned events, ignores ones outside the window (no window for trips)', () => {
+    const store = fresh();
+    clearBaseline(store);
+    store.setConferencePlan('pay360-2027', { status: 'going', reps: ['Maya'] }); // far in the future, well past 60 days
+    const trip = yourNextTrip(store, TODAY);
+    t.eq(trip.id, 'pay360-2027');
+  });
+  t.test('A "skip" or undecided assignment is not a trip', () => {
+    const store = fresh();
+    clearBaseline(store);
+    store.setConferencePlan('wtm-london-2026', { status: 'skip', reps: ['Maya'] });
+    store.setConferencePlan('iamtn-summit-2026', { status: null, reps: ['Maya'] });
+    t.eq(yourNextTrip(store, TODAY), null);
+  });
+  t.test('Nobody has "I am" set and nothing is assigned to the default rep -> no trip (no empty-state noise)', () => {
+    const store = fresh();
+    clearBaseline(store);
+    t.eq(yourNextTrip(store, TODAY), null);
   });
 }

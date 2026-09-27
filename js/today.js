@@ -18,6 +18,19 @@ export function actNowRows(store, today) {
     .sort((a, b) => b.encounters.at(-1).date.localeCompare(a.encounters.at(-1).date));
 }
 
+// The current rep's own next assigned trip (Going or Considering, they're one of the
+// reps), regardless of the 60-day window — this is "when is MY next trip", not "what's
+// coming up for the team". null when they have none, so Today can skip the card cleanly.
+export function yourNextTrip(store, today) {
+  const me = store.currentRep();
+  if (!me) return null;
+  const mine = scoreAll(store.conferences())
+    .map((s) => ({ ...s, plan: store.conferencePlan(s.id), daysUntil: dayNumber(s.conf.startDate) - dayNumber(today) }))
+    .filter((s) => s.daysUntil >= 0 && s.plan.status && s.plan.status !== 'skip' && s.plan.reps.includes(me))
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+  return mine[0] || null;
+}
+
 // Events staffed (Going/Considering) within the window, nearest first; if none, the next
 // A+/A events with no status yet, so the rep has something concrete to decide on.
 export function comingUpRows(store, today, windowDays = 60) {

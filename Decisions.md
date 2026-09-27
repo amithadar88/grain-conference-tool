@@ -437,6 +437,19 @@ closing, or polite tire-kicker?
   type. This only touches the Plan/eventCard assignment UI — not matching, not the
   capture-time nudge, not scoring.
 
+## 4f. Today: "Your next trip"
+- **No 60-day window on the trip itself:** Coming-up's window exists to keep the team
+  glance short; "when is MY next trip" is a different question with a definite, always-
+  correct answer regardless of how far out it is, so `yourNextTrip()` doesn't cap it.
+- **"Assigned" = a real status, not just a name on the event:** requires both
+  `reps.includes(me)` and a status of Going or Considering — a rep merely toggled onto an
+  event with no decision yet isn't "your next trip." Skip explicitly excludes it too.
+- **No empty-state card:** if the rep has nothing assigned, the section is simply
+  omitted, not a placeholder saying so — matches the brief's "no empty-state noise."
+- **Pulled out of the list below it**, not shown twice: the trip is excluded from the
+  regular Coming-up rows so the same event doesn't appear as both the headline card and a
+  row underneath it.
+
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
 - One addition beyond the brief: "Add conference with AI" (3b). I placed it after the
