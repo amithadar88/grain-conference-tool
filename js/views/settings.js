@@ -27,7 +27,7 @@ export function render(el, ctx) {
     <p id="saved" class="hint" role="status"></p>
   </form>
   <h3>Demo data</h3>
-  <p class="hint">Reset clears everything the team added or changed in this browser (leads, statuses, added events, AI summaries). Keys and "I am" are kept.</p>
+  <p class="hint">Reset clears everything the team added or changed in this browser (leads, statuses, added events, AI summaries) and goes back to the Team view. Keys and team names are kept.</p>
   <button class="btn" id="reset" type="button">Reset demo data</button>
   <h3 style="margin-top:20px">AI summaries</h3>
   <p class="hint">Copies all AI summaries as JSON, to paste into data/contacts.json under "aiSummaries".</p>
@@ -53,9 +53,10 @@ export function render(el, ctx) {
   });
 
   el.querySelector('#reset').addEventListener('click', () => {
-    if (!confirm('Reset demo data? Leads, statuses and added events from this browser will be deleted. Keys are kept.')) return;
+    if (!confirm('Reset demo data? Leads, statuses and added events from this browser will be deleted, and the view goes back to Team. Keys are kept.')) return;
     store.resetOverlay();
-    saved.textContent = 'Demo data reset ✓';
+    render(el, ctx); // "I am" goes back to Team — refresh the select to show it
+    el.querySelector('#saved').textContent = 'Demo data reset ✓';
   });
 
   el.querySelector('#copy-ai').addEventListener('click', async () => {

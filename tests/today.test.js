@@ -1,6 +1,6 @@
 import { createStore, memoryStorage } from '../js/store.js';
 import { dayNumber } from '../js/scoring.js';
-import { actNowRows, comingUpRows, yourNextTrip } from '../js/today.js';
+import { actNowRows, comingUpRows, yourNextTrip, nextTeamTrips } from '../js/today.js';
 
 const TODAY = '2026-09-26';
 
@@ -84,16 +84,22 @@ export default function todayTests(t, data) {
     t.eq(r.mode, 'decide');
   });
 
-  t.group('Today: Your next trip');
+  t.group('Today: Your next trip (signed in) / Next team trips (Team view)');
 
-  t.test('The demo baseline gives Maya (the default rep) WTM London as her next trip', () => {
+  t.test('With "I am" unset, yourNextTrip is always null — Team view uses nextTeamTrips instead', () => {
     const store = fresh();
+    t.eq(yourNextTrip(store, TODAY), null);
+  });
+  t.test("Maya's own next trip is WTM London (baseline: going, Maya + Daniel)", () => {
+    const store = fresh();
+    store.updateSettings({ me: 'Maya' });
     const trip = yourNextTrip(store, TODAY);
     t.eq([trip.id, trip.plan.reps], ['wtm-london-2026', ['Maya', 'Daniel']]);
   });
-  t.test('Nearest of possibly several assigned events, ignores ones outside the window (no window for trips)', () => {
+  t.test('Nearest of possibly several assigned events; no 60-day window for trips', () => {
     const store = fresh();
     clearBaseline(store);
+    store.updateSettings({ me: 'Maya' });
     store.setConferencePlan('pay360-2027', { status: 'going', reps: ['Maya'] }); // far in the future, well past 60 days
     const trip = yourNextTrip(store, TODAY);
     t.eq(trip.id, 'pay360-2027');
@@ -101,13 +107,18 @@ export default function todayTests(t, data) {
   t.test('A "skip" or undecided assignment is not a trip', () => {
     const store = fresh();
     clearBaseline(store);
+    store.updateSettings({ me: 'Maya' });
     store.setConferencePlan('wtm-london-2026', { status: 'skip', reps: ['Maya'] });
     store.setConferencePlan('iamtn-summit-2026', { status: null, reps: ['Maya'] });
     t.eq(yourNextTrip(store, TODAY), null);
   });
-  t.test('Nobody has "I am" set and nothing is assigned to the default rep -> no trip (no empty-state noise)', () => {
+  t.test('nextTeamTrips: nearest few trips across everyone, regardless of who (baseline)', () => {
+    const store = fresh();
+    t.eq(nextTeamTrips(store, TODAY, 3).map((s) => s.id), ['iamtn-summit-2026', 'wtm-london-2026', 'crosstech-world-2026']);
+  });
+  t.test('nextTeamTrips: with nothing staffed, there are none', () => {
     const store = fresh();
     clearBaseline(store);
-    t.eq(yourNextTrip(store, TODAY), null);
+    t.eq(nextTeamTrips(store, TODAY), []);
   });
 }

@@ -40,14 +40,14 @@ export default function storeTests(t, data) {
     store.mergeInto(r.personId, 'p-dana');
     t.eq([store.person(r.personId), store.encountersFor('p-dana').length, store.unresolvedFor(r.personId)], [null, 4, []]);
   });
-  t.test('Reset clears the overlay but keeps settings', () => {
+  t.test('Reset clears the overlay and "I am" (back to Team view), keeps other settings', () => {
     const { store } = fresh();
     store.updateSettings({ me: 'Maya', geminiKey: 'k' });
     store.setConferencePlan('pay360-2027', { status: 'going', reps: ['Maya'] }); // no seed defaultPlan: should go back to null
     store.saveCapture(capture(), { link: { personId: 'p-priya' } });
     store.resetOverlay();
     t.eq([store.encountersFor('p-priya').length, store.conferencePlan('pay360-2027').status, store.settings().me, store.settings().geminiKey],
-      [1, null, 'Maya', 'k']);
+      [1, null, '', 'k']);
   });
   t.test('Reset restores the seed demo baseline (a conference with a defaultPlan)', () => {
     const { store } = fresh();
@@ -55,13 +55,6 @@ export default function storeTests(t, data) {
     t.eq(store.conferencePlan('iamtn-summit-2026'), { status: 'skip', reps: [] });
     store.resetOverlay();
     t.eq(store.conferencePlan('iamtn-summit-2026'), { status: 'going', reps: ['Shira'] });
-  });
-  t.test('defaultRep(): the team-list-order tiebreak among reps tied for the most seed encounters', () => {
-    const { store } = fresh();
-    t.eq(store.defaultRep(), 'Maya');
-    t.eq(store.currentRep(), 'Maya');
-    store.updateSettings({ me: 'Daniel' });
-    t.eq(store.currentRep(), 'Daniel');
   });
   t.test('Corrupted saved data does not crash the app', () => {
     const storage = memoryStorage();

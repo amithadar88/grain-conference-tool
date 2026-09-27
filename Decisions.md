@@ -404,20 +404,34 @@ closing, or polite tire-kicker?
   before, overriding the default from then on. **"Reset demo data" restores the baseline
   for free** — it just clears the overlay, and the seed defaults are read fresh again,
   the same mechanism as everything else `Reset` already restored.
-- **Default demo rep, computed from the data, not hardcoded.** With no "I am" set, the
-  app acts as whichever team member the `team` list names first among those tied for the
-  most encounters in the seed contacts (`js/store.js`'s `defaultRep()`) — currently Maya,
-  Daniel and Shira are tied at 6 seed encounters each, Maya wins because she's first in
-  `contacts.json`'s `team` array. Computed once from **seed** encounters only, so it can't
-  drift as the rep captures live leads during a demo. A small "Viewing as Maya · change in
-  Settings" note appears on Today and Plan whenever "I am" is empty.
-- **The baseline itself:** WTM London 2026 (Maya + Daniel going) is the demo rep's own
-  upcoming trip, so Today's "Your next trip" (section 2) and Plan's "Mine" filter
-  (section 1) have something real to show without any setup. IAMTN (going, Shira) and
+- **No default identity — "I am" empty means Team view, on purpose (revised after first
+  building this).** The first version silently guessed a "default demo rep" from whoever
+  had the most seed encounters, so the app was never really empty even with "I am" unset.
+  On review this was the wrong call: a tool that quietly assumes you're "Maya" without
+  asking is confusing the moment a *different* real person opens it, and it hides the
+  team-wide view as a real, first-class mode. Now empty "I am" means exactly that —
+  nobody in particular, i.e. "show me the whole team" — and every "mine"-shaped feature
+  has an explicit team-wide alternative instead of a guessed identity: Today shows "Next
+  team trips" instead of "Your next trip" (section 2), and Plan hides the "Mine" filter
+  entirely rather than filtering by a fake default (section 1). Gaps was always team-wide
+  regardless of "I am", so it needed no change.
+- **The baseline itself, still seed-level defaults:** WTM London (Maya + Daniel, Going)
+  and DACT Treasury Fair (Daniel, Going) mean at least two team members have a real
+  upcoming trip no matter who's picked from the header. IAMTN (Shira, Going) and
   CrossTech World / MPE (considering) round out a few Going/Considering events. Several
   A/A+ events (PAY360, EuroFinance, Money20/20 Europe, ITB Berlin, and others) are
   deliberately left with no `defaultPlan`, so Gaps (section 3) has real "nobody assigned"
   lines to show, not an empty list.
+- **The header user icon is the one place "I am" is set from** (a generic person icon for
+  Team, initials in a circle once someone's picked) — no switcher duplicated inside
+  Today or Plan themselves. The existing "I am" field in Settings still works too (same
+  `updateSettings({ me })` call); the two stay in sync because both just read/write the
+  same store, and the header re-renders on any store change (`store.onChange`).
+- **"Reset demo data" now also clears "I am"** (back to Team view), which is a real
+  behavior change from the first version — Settings previously promised "I am" is kept
+  on reset. The team's staffing/status changes and "I am" are both "this session's
+  identity/choices," conceptually one category, so both reset together; keys and team
+  names (harder to re-enter) still survive.
 
 ## 4e. Plan filters: Mine / Status / Tier
 - **One compact row, native controls:** a "Mine" toggle chip plus two `<select>`s
@@ -450,6 +464,11 @@ closing, or polite tire-kicker?
 - **Pulled out of the list below it**, not shown twice: the trip is excluded from the
   regular Coming-up rows so the same event doesn't appear as both the headline card and a
   row underneath it.
+- **Team view: "Next team trips" (plural), not one guessed person's.** With "I am" empty,
+  `nextTeamTrips()` takes the nearest few (up to 3) events anyone on the team has a real
+  status on, any assignee — same "real status" rule as `yourNextTrip()`, just not
+  filtered to one name. Each row lists everyone going, not "also going" (there's no "me"
+  to exclude).
 
 ## 4g. Gaps: measuring the plan, not just the event list
 - **The brief asks "where are we under-invested" — that's a question about the team's

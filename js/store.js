@@ -75,20 +75,6 @@ export function createStore({ seed, storage, prefix = 'grain.' }) {
   const seedPeople = seed.contacts.people || [];
   const seedEncounters = seed.contacts.encounters || [];
 
-  // Default demo rep: whoever the team list names first among those tied for the most
-  // encounters in the demo data (evaluators never set "I am", so Plan/Today need a rep
-  // to reason about from the very first open). Computed once from seed data only, so it
-  // never drifts as the rep captures live leads during a demo.
-  const DEFAULT_REP = (() => {
-    const counts = {};
-    for (const e of seedEncounters) if (e.rep) counts[e.rep] = (counts[e.rep] || 0) + 1;
-    const team = seed.contacts.team || [];
-    let best = null;
-    for (const name of team) if (best === null || (counts[name] || 0) > (counts[best] || 0)) best = name;
-    if (best === null) [best] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0] || [''];
-    return best || '';
-  })();
-
   const api = {
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
@@ -106,9 +92,6 @@ export function createStore({ seed, storage, prefix = 'grain.' }) {
       overlay.conferencePlans[id] = { ...api.conferencePlan(id), ...patch };
       persist();
     },
-    // "I am" in Settings, or the default demo rep if nobody has set it yet.
-    defaultRep() { return DEFAULT_REP; },
-    currentRep() { return settings.me || DEFAULT_REP; },
     addConference(conf) {
       const saved = { ...conf, id: conf.id || newId('conf') };
       overlay.addedConferences.push(saved);
@@ -227,9 +210,13 @@ export function createStore({ seed, storage, prefix = 'grain.' }) {
     clearDraft() { storage.removeItem(DRAFT); },
 
     // ---- Reset ----
+    // Clears the team's changes AND "I am" (back to the team-wide view). Keys and team
+    // names are kept — see js/views/settings.js for the copy shown to the rep.
     resetOverlay() {
       overlay = emptyOverlay();
       storage.removeItem(OVERLAY);
+      settings = { ...settings, me: '' };
+      storage.setItem(SETTINGS, JSON.stringify(settings));
       listeners.forEach((fn) => fn());
     },
   };

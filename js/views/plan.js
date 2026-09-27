@@ -3,7 +3,7 @@
 import { scoreAll, windowMonths, monthLabel, inWindow } from '../scoring.js';
 import { computeGaps } from '../gaps.js';
 import { peopleYouKnow } from '../eventHistory.js';
-import { esc, fmtRange, tierClass, viewingAsHTML } from './ui.js';
+import { esc, fmtRange, tierClass } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
 
 // Full detail: actionable lines (with links) first, then secondary "market" notes.
@@ -64,9 +64,9 @@ export function render(el, ctx) {
     </a>`;
   };
 
-  const me = store.currentRep();
+  const me = store.settings().me; // '' = team-wide view; the "Mine" filter only makes sense for a real person
   const filtersHTML = () => `<div class="plan-row">
-    <button type="button" class="chip" id="plan-mine" aria-pressed="${state.mine}">Mine</button>
+    ${me ? `<button type="button" class="chip" id="plan-mine" aria-pressed="${state.mine}">Mine</button>` : ''}
     <select id="plan-status" aria-label="Status">
       <option value="">All statuses</option>
       <option value="going"${state.status === 'going' ? ' selected' : ''}>Going</option>
@@ -80,8 +80,9 @@ export function render(el, ctx) {
   </div>`;
 
   const timelineHTML = () => {
+    const effective = me ? state : { ...state, mine: false };
     const now = scoreAll(store.conferences()).filter((x) => inWindow(x.conf))
-      .filter((s) => matchesPlanFilters(s, store.conferencePlan(s.id), state, me));
+      .filter((s) => matchesPlanFilters(s, store.conferencePlan(s.id), effective, me));
     return months.map((m) => {
       const inMonth = now.filter((x) => x.conf.startDate.slice(0, 7) === m).sort((a, b) => a.conf.startDate.localeCompare(b.conf.startDate));
       return `<div class="month"><h4>${monthLabel(m)}</h4>${inMonth.map(mini).join('') || '<div class="empty">No events match</div>'}</div>`;
@@ -90,7 +91,6 @@ export function render(el, ctx) {
 
   el.innerHTML = `<section class="view">
   <h2>Plan · ${monthLabel(months[0])} – ${monthLabel(months[months.length - 1])}</h2>
-  ${viewingAsHTML(store)}
   <div class="gaps">${gapsHTML(computeGaps(store))}</div>
   ${filtersHTML()}
   <div class="timeline">${timelineHTML()}</div>
@@ -122,7 +122,7 @@ export function render(el, ctx) {
     timeline.innerHTML = timelineHTML();
     timeline.scrollLeft = left;
   };
-  el.querySelector('#plan-mine').addEventListener('click', (e) => {
+  el.querySelector('#plan-mine')?.addEventListener('click', (e) => {
     state.mine = !state.mine;
     e.currentTarget.setAttribute('aria-pressed', state.mine);
     redrawTimeline();

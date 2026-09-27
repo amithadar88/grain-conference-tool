@@ -1,12 +1,12 @@
 // Today tab: the default landing page. "What should I do right now?" — all rules-based
 // except the follow-up draft button, which reuses the same AI call as the contact page.
-import { actNowRows, comingUpRows, yourNextTrip } from '../today.js';
+import { actNowRows, comingUpRows, yourNextTrip, nextTeamTrips } from '../today.js';
 import { scoreAll } from '../scoring.js';
 import { computeGaps } from '../gaps.js';
 import { peopleYouKnow } from '../eventHistory.js';
 import { staffingChip } from './plan.js';
 import { renderFollowup } from './followup.js';
-import { esc, fmtRange, signalClass, tierClass, viewingAsHTML } from './ui.js';
+import { esc, fmtRange, signalClass, tierClass } from './ui.js';
 
 const GUIDE_STEPS = [
   {
@@ -47,25 +47,41 @@ function actNowHTML(rows) {
     </li>`).join('')}</ul></div>`;
 }
 
-function nextTripHTML(store, today, trip) {
-  const others = trip.plan.reps.filter((r) => r !== store.currentRep());
+// One trip row. Personal view excludes me from the "who else" line; team view lists everyone.
+function tripMiniHTML(store, today, trip, showAllReps) {
+  const reps = showAllReps ? trip.plan.reps : trip.plan.reps.filter((r) => r !== store.settings().me);
   const known = peopleYouKnow(trip.conf, store, today).length;
   return `<a class="mini next-trip tier-${tierClass(trip.tier)}" href="#events/${encodeURIComponent(trip.id)}">
-    <b>✈️ Your next trip: ${esc(trip.conf.name)}</b>
-    <small>${esc(fmtRange(trip.conf.startDate, trip.conf.endDate))} · ${esc(trip.conf.city)} · in ${trip.daysUntil} day${trip.daysUntil === 1 ? '' : 's'}</small>
-    ${others.length ? `<div class="hint">Also going: ${esc(others.join(', '))}</div>` : ''}
+    <b>${esc(trip.conf.name)}</b> <span class="muted">in ${trip.daysUntil} day${trip.daysUntil === 1 ? '' : 's'}</span>
+    <small>${esc(fmtRange(trip.conf.startDate, trip.conf.endDate))} · ${esc(trip.conf.city)}</small>
+    ${reps.length ? `<div class="hint">${showAllReps ? 'Going' : 'Also going'}: ${esc(reps.join(', '))}</div>` : ''}
     ${known ? `<div class="hint">👥 ${known} from a previous edition</div>` : ''}
   </a>`;
 }
 
+// Signed-in rep: their own next trip. Team-wide view (nobody signed in): the next few
+// trips anyone on the team has, instead of one person's.
+function highlightBlock(store, today) {
+  const me = store.settings().me;
+  if (me) {
+    const trip = yourNextTrip(store, today);
+    return trip ? { label: 'Your next trip', html: tripMiniHTML(store, today, trip, false), ids: [trip.id] } : { label: '', html: '', ids: [] };
+  }
+  const trips = nextTeamTrips(store, today);
+  return trips.length
+    ? { label: 'Next team trips', html: trips.map((t) => tripMiniHTML(store, today, t, true)).join(''), ids: trips.map((t) => t.id) }
+    : { label: '', html: '', ids: [] };
+}
+
 function comingUpHTML(store, today) {
-  const trip = yourNextTrip(store, today);
+  const { label, html, ids } = highlightBlock(store, today);
   const { mode, items: rawItems } = comingUpRows(store, today);
-  const items = trip ? rawItems.filter((s) => s.id !== trip.id) : rawItems;
-  if (!items.length && !trip) return '<div class="box"><b>Coming up</b><p class="hint">Nothing planned in the next 60 days, and no A/A+ events waiting on a decision.</p></div>';
+  const idSet = new Set(ids);
+  const items = rawItems.filter((s) => !idSet.has(s.id));
+  if (!items.length && !html) return '<div class="box"><b>Coming up</b><p class="hint">Nothing planned in the next 60 days, and no A/A+ events waiting on a decision.</p></div>';
   const title = mode === 'planned' ? 'Coming up' : 'Coming up — nothing staffed yet, decide on these';
   return `<div class="box"><b>${title}</b>
-    ${trip ? nextTripHTML(store, today, trip) : ''}
+    ${html ? `<p class="subhead">✈️ ${esc(label)}</p>${html}` : ''}
     <div class="rows">${items.map((s) => {
     const chip = staffingChip(s.plan);
     const known = peopleYouKnow(s.conf, store, today).length;
@@ -99,7 +115,6 @@ export function render(el, ctx) {
 
   el.innerHTML = `<section class="view">
     <h2>Today</h2>
-    ${viewingAsHTML(store)}
     ${guideHTML(store)}
     ${actNowHTML(rows)}
     ${comingUpHTML(store, ctx.today)}

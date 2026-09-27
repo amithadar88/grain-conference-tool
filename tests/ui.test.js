@@ -1,4 +1,4 @@
-import { esc, safeUrl, fmtRange } from '../js/views/ui.js';
+import { esc, safeUrl, fmtRange, initials } from '../js/views/ui.js';
 import { eventCardHTML, clusterBadge } from '../js/views/eventCard.js';
 import { scoreAll } from '../js/scoring.js';
 import { staffingChip, matchesPlanFilters } from '../js/views/plan.js';
@@ -16,6 +16,9 @@ export default function uiTests(t, data) {
   t.test('Date ranges read naturally', () => {
     t.eq([fmtRange('2026-09-28', '2026-10-01'), fmtRange('2027-06-08', '2027-06-10'), fmtRange('2026-12-30', '2027-01-02')],
       ['28 Sep – 1 Oct 2026', '8–10 Jun 2027', '30 Dec 2026 – 2 Jan 2027']);
+  });
+  t.test('Header initials: up to the first two words, uppercased; empty for Team view', () => {
+    t.eq([initials('Maya'), initials('Maya Cohen'), initials(''), initials(undefined)], ['M', 'MC', '', '']);
   });
   t.test('Event card escapes a hostile name and handles missing website/notes', () => {
     const conf = { ...data.conferences.conferences.find((c) => c.id === 'ces-2027'), name: '<img src=x onerror=alert(1)>', website: undefined, notes: undefined };

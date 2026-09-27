@@ -18,17 +18,28 @@ export function actNowRows(store, today) {
     .sort((a, b) => b.encounters.at(-1).date.localeCompare(a.encounters.at(-1).date));
 }
 
-// The current rep's own next assigned trip (Going or Considering, they're one of the
+// The signed-in rep's own next assigned trip (Going or Considering, they're one of the
 // reps), regardless of the 60-day window — this is "when is MY next trip", not "what's
-// coming up for the team". null when they have none, so Today can skip the card cleanly.
+// coming up for the team". null when nobody's signed in, or they have none, so Today can
+// skip the card cleanly.
 export function yourNextTrip(store, today) {
-  const me = store.currentRep();
+  const me = store.settings().me;
   if (!me) return null;
   const mine = scoreAll(store.conferences())
     .map((s) => ({ ...s, plan: store.conferencePlan(s.id), daysUntil: dayNumber(s.conf.startDate) - dayNumber(today) }))
     .filter((s) => s.daysUntil >= 0 && s.plan.status && s.plan.status !== 'skip' && s.plan.reps.includes(me))
     .sort((a, b) => a.daysUntil - b.daysUntil);
   return mine[0] || null;
+}
+
+// Team-wide view (nobody signed in): the next few trips ANYONE on the team has, instead
+// of one person's. Same "real status, not just tagged" rule as yourNextTrip.
+export function nextTeamTrips(store, today, limit = 3) {
+  return scoreAll(store.conferences())
+    .map((s) => ({ ...s, plan: store.conferencePlan(s.id), daysUntil: dayNumber(s.conf.startDate) - dayNumber(today) }))
+    .filter((s) => s.daysUntil >= 0 && s.plan.status && s.plan.status !== 'skip' && s.plan.reps.length)
+    .sort((a, b) => a.daysUntil - b.daysUntil)
+    .slice(0, limit);
 }
 
 // Events staffed (Going/Considering) within the window, nearest first; if none, the next
