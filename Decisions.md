@@ -512,6 +512,19 @@ closing, or polite tire-kicker?
 
 ## 7. What I'd build next week
 1. **Team sync** (Supabase): shared data, so the team sees each other's leads and plans.
+   Two pieces, deliberately not built now — this quarter's assignment is a single-user
+   demo tool, and both of these only pay off once there's a real backend and real users:
+   - **Login and lead ownership:** each lead gets an owner (the rep who captured it, with
+     reassignment); Today's Act-now becomes "my leads" by default, with a team view for
+     managers; the owner syncs to HubSpot's native "Contact owner" property (today the
+     conference name is the only HubSpot field this tool writes that says anything about
+     provenance).
+   - **Team staffing:** a roster with skills (languages, verticals worked), travel
+     constraints/requests ("can't fly in November", "prefers pairing with X"), and an
+     AI-assisted staffing suggestion for a given event that respects them — today's
+     `reps` list on a conference is a flat set of names with no sense of who's a good fit
+     or who's overloaded. A fairness table (who traveled where, how often) so top events
+     don't always go to the same one or two people.
 2. **History bonus:** score events by the pipeline they actually produced for Grain.
 3. **Cost factor:** ticket/booth cost in the scoring.
 4. **HubSpot Company association** + pulling existing HubSpot contacts into matching;
@@ -519,8 +532,8 @@ closing, or polite tire-kicker?
 5. **AI conference discovery by niche** (see section 1b): the AI proactively suggests
    events we don't know about; the "add from link" flow then rates them.
 6. **Paid AI tier** before using real customer data.
-7. [bonus items I didn't get to: sliders / card scan / follow-up email]
-8. Calendar integration, login.
+7. [bonus items I didn't get to: business-card photo / voice note lead capture]
+8. Calendar integration.
 
 ## 8. How I used AI tools
 - See AI_LOG.md
