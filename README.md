@@ -6,6 +6,21 @@ relationship summaries, and HubSpot push.
 
 Plain HTML/CSS/JavaScript. No build step, nothing to install. Hosted free on Netlify.
 
+## What's in the app
+
+- **Today** — lands here by default: who needs a follow-up right now, the team's next
+  trips, and any gaps in the plan.
+- **Contacts** — every lead met so far, with an AI read of the relationship (warming up,
+  or just being polite?) and a one-click follow-up email draft.
+- **Capture** — log a lead in under 10 seconds on the show floor, even offline.
+  Recognizes people the team has met at previous events.
+- **Events** — every conference scored for Grain's ICP, with the reasons behind each
+  score, plus **+ Add conference** to bring in a new one.
+- **Plan** — a 12-month view of what the team's attending, who's covering what (an event
+  can have more than one rep), and where the team's under-invested.
+- **Settings** — the small person icon in the header switches between "Team" (everyone)
+  and one team member ("I am"); Settings itself holds API keys, team names and demo reset.
+
 ## Host and update it yourself
 
 You don't need to be a developer for any of this.
@@ -39,8 +54,10 @@ All events live in one file: `data/conferences.json`.
    Scores and tiers are calculated by the app, so don't type them in.
 5. Open `<your-site>/tests.html` to check everything still passes.
 
-Reps can also add an event from inside the app: **Events → + Add conference** (AI drafts
-the ratings from the event's website; the rep confirms). Those live in that rep's browser.
+Reps can also add an event from inside the app: **Events → + Add conference**. A link (or
+a pasted description, if the site can't be read) is enough — the AI drafts the name,
+dates and ratings, and the rep checks everything before confirming. Those live in that
+rep's browser.
 
 ### 4. HubSpot (optional)
 1. In HubSpot: **Settings → Integrations → Private apps → Create a private app**.
@@ -53,7 +70,7 @@ the ratings from the event's website; the rep confirms). Those live in that rep'
 
 ### 5. Reset the demo data
 In the app: **Settings → Reset demo data**. This clears leads, statuses and added events
-in that browser. Keys are kept.
+in that browser, and goes back to "Team" view. Keys and team names are kept.
 
 ### 6. Run the tests
 Open `<your-site>/tests.html`. Everything should be green.

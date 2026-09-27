@@ -208,8 +208,9 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
   score the same whether Grain has been going for five years or is walking in cold. Who
   the team happens to have met is about Grain's own history, not the event's quality, and
   it changes constantly (a new hire, a new contact) in a way that would make scores drift
-  for reasons that have nothing to do with the room. So it's shown, labelled "not part of
-  the score," and left out of `scoreAll()` entirely.
+  for reasons that have nothing to do with the room. So it's shown — as its own section
+  below the score breakdown, not inside it, with "Not part of the score" as the chip's
+  tooltip rather than heading text — and left out of `scoreAll()` entirely.
 - **Series matching, not exact-name matching:** editions rarely share an id (`"MPE 2026"`
   logged by a rep vs. `"MPE 2027 (Merchant Payments Ecosystem)"` in next year's list), so
   matching strips the year and parentheticals and treats a whole-word prefix match as the
@@ -243,6 +244,11 @@ closing, or polite tire-kicker?
   - Summary is saved and regenerated only when a new encounter is added
     (faster, stable output, respects free-tier limits).
   - No key -> a clear message, never a crash.
+- **Generating survives leaving the page.** Clicking Generate and navigating away used to
+  lose the result — nothing cancels the request, but nothing was watching for it either.
+  A module-level map (personId -> in-flight promise) tracks it; the contact page shows
+  "Generating..." if reopened before it lands, and the result is saved (`store.setAiSummary`)
+  whichever page happens to be open when it arrives.
 
 ### How evaluators see it working
 - Key stored as a Netlify environment variable (server side), so anyone clicking the
@@ -322,6 +328,17 @@ closing, or polite tire-kicker?
 - Lead capture and matching work offline.
 - AI summaries and HubSpot push need a connection; offline, the buttons are disabled
   with a short hint.
+- **Every AI call retries once, automatically, on a transient error** (timeout,
+  unavailable, busy — the function's own cold start is the usual cause), showing "Taking
+  longer than usual, retrying..."; an error only ever surfaces if the retry also fails.
+  Shared via `withAiRetry()` in `js/api.js`, the same shape as HubSpot's existing
+  per-contact retry. Timeouts: the Netlify function budgets itself 9 s of its own work
+  (`TIME_BUDGET_MS`) to stay inside the platform's fixed ~10 s limit for a synchronous
+  function on the free plan — already near that ceiling, so it's not raised. The client
+  waits up to 15 s per attempt before giving up, comfortably above the function's own
+  budget with room for a cold start; the retry (not a longer wait) is what actually fixes
+  the "took too long on the first try, worked on the second" symptom, since attempt two
+  hits an already-warm function.
 - **Deliberately no sync queues or background sync:** complexity that isn't worth it
   for this scope.
 - **One exception to "no offline magic": a tiny network-first cache** (service worker).
@@ -369,8 +386,9 @@ closing, or polite tire-kicker?
   copy — one line per section (Events, Plan, Capture, Contacts) explaining what it does,
   with a link into it — instead of scripted steps naming specific demo records. It reads
   like product onboarding regardless of who opens the app or what's in the data.
-  Dismissal lives in the store overlay, so it comes back after "Reset demo data" — the
-  same mechanism as every other piece of team-changed state.
+  Collapsed to one line by default (mobile space); expands to the 4 rows on request.
+  Dismissal (the "×" or "Got it!") lives in the store overlay, so it comes back after
+  "Reset demo data" — the same mechanism as every other piece of team-changed state.
 - **Trade-off:** the app no longer auto-opens Capture when a conference is running today
   (previous default). Today's "Act now"/"Coming up" replace that shortcut; Capture is
   still one tap away (centered, raised) in the bottom nav.
@@ -463,10 +481,11 @@ closing, or polite tire-kicker?
 - **Assigned rep, one event, multiple people:** the Plan model went from one `rep` string
   to a `reps` list per conference (`js/store.js`, `js/views/eventCard.js`), driven by
   section 2's "who else from the team is going" needing more than one name to ever be
-  meaningful. The single "Assign rep" dropdown became a row of toggle chips (one per team
-  member), matching the existing status-chip pattern instead of introducing a new control
-  type. This only touches the Plan/eventCard assignment UI — not matching, not the
-  capture-time nudge, not scoring.
+  meaningful. The UI went through two shapes before settling: a single "Assign rep"
+  dropdown (one rep only) → a row of toggle chips, one per team member (crowded, didn't
+  scale with team size) → a compact multi-select dropdown ("Assign to" / comma-separated
+  names, checkmarks when open), the current one. This only touches the Plan/eventCard
+  assignment UI — not matching, not the capture-time nudge, not scoring.
 
 ## 4f. Today: "Your next trip"
 - **No 60-day window on the trip itself:** Coming-up's window exists to keep the team
