@@ -1,5 +1,6 @@
 // Plan tab: 13-month timeline by tier, clusters, status/rep, and a short gaps list.
 import { scoreAll, findGaps, gapLines, windowMonths, monthLabel, inWindow } from '../scoring.js';
+import { peopleYouKnow } from '../eventHistory.js';
 import { esc, fmtRange, tierClass } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
 
@@ -59,7 +60,10 @@ export function render(el, ctx) {
   const drawDetail = () => {
     const s = scoreAll(store.conferences()).find((x) => x.id === openId);
     dialog.querySelector('.sheet-title').textContent = s ? s.conf.name : '';
-    body.innerHTML = s ? eventCardHTML(s, { plan: store.conferencePlan(s.id), team: store.team(), today: ctx.today, open: true }) : '';
+    body.innerHTML = s ? eventCardHTML(s, {
+      plan: store.conferencePlan(s.id), team: store.team(), today: ctx.today, open: true,
+      peopleYouKnow: peopleYouKnow(s.conf, store, ctx.today),
+    }) : '';
   };
   const redrawTimeline = () => {
     const left = timeline.scrollLeft;

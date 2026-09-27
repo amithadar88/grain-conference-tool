@@ -6,8 +6,9 @@ import matching from './matching.test.js';
 import signals from './signals.test.js';
 import validate from './validate.test.js';
 import today from './today.test.js';
+import eventHistory from './eventHistory.test.js';
 
-export const suites = [scoring, store, ui, matching, signals, validate, today];
+export const suites = [scoring, store, ui, matching, signals, validate, today, eventHistory];
 
 export function runAll(t, data) {
   for (const suite of suites) suite(t, data);

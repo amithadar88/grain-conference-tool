@@ -193,6 +193,32 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
   trend, concrete asks, seniority change) give a baseline label; AI reads the notes
   (see section 3).
 
+## 2b. "People you know" on events (a separate signal, not in the score)
+- **Feature:** each event shows who the team already met at a previous edition of the
+  same series (name, company, current rules label), with a link to their contact page.
+- **Why it's a separate signal, not a scoring factor:** the score measures the *event*
+  (audience, access, market, size, travel) and must stay stable — the same event should
+  score the same whether Grain has been going for five years or is walking in cold. Who
+  the team happens to have met is about Grain's own history, not the event's quality, and
+  it changes constantly (a new hire, a new contact) in a way that would make scores drift
+  for reasons that have nothing to do with the room. So it's shown, labelled "not part of
+  the score," and left out of `scoreAll()` entirely.
+- **Series matching, not exact-name matching:** editions rarely share an id (`"MPE 2026"`
+  logged by a rep vs. `"MPE 2027 (Merchant Payments Ecosystem)"` in next year's list), so
+  matching strips the year and parentheticals and treats a whole-word prefix match as the
+  same series (`"eurofinance"` matches `"eurofinance international treasury management"`).
+  A `"(formerly X)"` suffix (e.g. CrossTech World, formerly IMTC World) is parsed as an
+  alias so old encounters under the retired name still count. Same-brand-different-region
+  events (Money20/20 Europe vs. USA vs. Asia) deliberately do NOT match — same first word,
+  different series.
+- **"Previous" is enforced, not assumed:** an encounter already logged against *this*
+  conference record, or dated on/after it starts, doesn't count — otherwise a rep
+  capturing someone at the event happening right now would see them listed as "from last
+  year."
+- **Next-week version:** real attendance data (attendee list export, HubSpot event
+  associations, or LinkedIn "who's going") instead of inferring from Grain's own capture
+  history — this only knows about people *we've* met, not everyone attending.
+
 ## 3. Main AI feature: relationship-arc summary (why this one, and why AI)
 
 **Feature:** a relationship-arc summary for repeat contacts: warming relationship worth

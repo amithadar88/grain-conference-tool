@@ -2,7 +2,7 @@
 // show up immediately) and refreshes the saved copy. Only when the network fails or takes more
 // than 3 seconds do we answer from the saved copy. No sync, no queues.
 // When you add a file to the app, add it to SHELL and bump CACHE.
-const CACHE = 'grain-v5';
+const CACHE = 'grain-v6';
 const SHELL = [
   './',
   'index.html',
@@ -15,6 +15,7 @@ const SHELL = [
   'js/validate.js',
   'js/api.js',
   'js/today.js',
+  'js/eventHistory.js',
   'js/views/ui.js',
   'js/views/today.js',
   'js/views/eventCard.js',

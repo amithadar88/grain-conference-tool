@@ -2,6 +2,7 @@
 // except the follow-up draft button, which reuses the same AI call as the contact page.
 import { actNowRows, comingUpRows } from '../today.js';
 import { findGaps, gapLines, scoreAll } from '../scoring.js';
+import { peopleYouKnow } from '../eventHistory.js';
 import { staffingChip } from './plan.js';
 import { renderFollowup } from './followup.js';
 import { esc, fmtRange, signalClass, tierClass } from './ui.js';
@@ -51,9 +52,10 @@ function comingUpHTML(store, today) {
   const title = mode === 'planned' ? 'Coming up' : 'Coming up — nothing staffed yet, decide on these';
   return `<div class="box"><b>${title}</b><div class="rows">${items.map((s) => {
     const chip = staffingChip(s.plan);
+    const known = peopleYouKnow(s.conf, store, today).length;
     return `<a class="mini tier-${tierClass(s.tier)}" href="#events/${encodeURIComponent(s.id)}">
       <b>${esc(s.conf.name)}</b> <span class="muted">in ${s.daysUntil} day${s.daysUntil === 1 ? '' : 's'}</span>
-      <small>${esc(fmtRange(s.conf.startDate, s.conf.endDate))} · ${esc(s.conf.city)}</small>
+      <small>${esc(fmtRange(s.conf.startDate, s.conf.endDate))} · ${esc(s.conf.city)}${known ? ` · 👥 ${known} from a previous edition` : ''}</small>
       ${chip ? `<span class="staff staff-${chip.kind}">${esc(chip.text)}</span>` : ''}
     </a>`;
   }).join('')}</div></div>`;

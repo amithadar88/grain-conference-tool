@@ -1,5 +1,6 @@
 // Events tab: filterable list of scored events with the "Why?" breakdown.
 import { scoreAll, filterEvents, REGIONS, TIERS, windowMonths, monthLabel } from '../scoring.js';
+import { peopleYouKnow } from '../eventHistory.js';
 import { eventCardHTML, bindEventCardControls } from './eventCard.js';
 import { esc } from './ui.js';
 
@@ -38,6 +39,7 @@ export function render(el, ctx, focusId) {
     el.querySelector('#ev-count').textContent = `${items.length} event${items.length === 1 ? '' : 's'}`;
     list.innerHTML = items.map((s) => eventCardHTML(s, {
       plan: store.conferencePlan(s.id), team: store.team(), today: ctx.today, open: s.id === focusId,
+      peopleYouKnow: peopleYouKnow(s.conf, store, ctx.today),
     })).join('') || '<p class="muted">No events match these filters.</p>';
   };
   el.querySelector('.filters').addEventListener('input', (e) => {

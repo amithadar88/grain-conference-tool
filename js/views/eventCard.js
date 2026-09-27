@@ -1,6 +1,6 @@
 // The event card, shared by Events, Plan detail and the Add-conference review screen.
 import { FACTORS, FACTOR_LABELS, oneLineSummary } from '../scoring.js';
-import { esc, safeUrl, fmtRange, fmtDate, tierClass } from './ui.js';
+import { esc, safeUrl, fmtRange, fmtDate, tierClass, signalClass } from './ui.js';
 
 const STATUSES = [['going', 'Going'], ['considering', 'Considering'], ['skip', 'Skip']];
 
@@ -30,11 +30,22 @@ function provenance(c) {
   return `<span class="badge">${how} ${esc(c.addedBy)}, ${esc(fmtDate(c.addedAt))}</span>`;
 }
 
+// "👥 3 from a previous edition" — not part of the score, just a heads-up.
+const peopleBadgeHTML = (rows) => (rows.length
+  ? `<span class="badge people" title="Not part of the score">👥 ${rows.length} from a previous edition</span>`
+  : '');
+
+const peopleListHTML = (rows) => (rows.length
+  ? `<div class="pc people"><h4>👥 People you know <span class="hint">(not part of the score)</span></h4>
+      <ul>${rows.map((r) => `<li><a href="#contacts/${encodeURIComponent(r.person.id)}">${esc(r.person.name)}</a>
+        ${r.person.company ? `· ${esc(r.person.company)}` : ''} · <span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span></li>`).join('')}</ul></div>`
+  : '');
+
 /**
  * s: one item from scoreAll(). opts: { plan, team, today, controls, open }
  * Returns an HTML string. Controls are wired by bindEventCardControls().
  */
-export function eventCardHTML(s, { plan = { status: null, rep: null }, team = [], today = '', controls = true, open = false } = {}) {
+export function eventCardHTML(s, { plan = { status: null, rep: null }, team = [], today = '', controls = true, open = false, peopleYouKnow = [] } = {}) {
   const c = s.conf;
   const past = today && c.endDate < today;
   const site = safeUrl(c.website);
@@ -54,7 +65,7 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
   </div>
   <div class="action">${esc(s.action)}</div>
   <div class="oneliner">${esc(oneLineSummary(s))}</div>
-  <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterBadgeHTML(s.cluster)}${provenance(c)}</div>
+  <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterBadgeHTML(s.cluster)}${peopleBadgeHTML(peopleYouKnow)}${provenance(c)}</div>
   ${controls ? `<div class="plan-row">${statusButtons}<select data-rep data-id="${esc(c.id)}" aria-label="Assigned rep">${repOptions}</select></div>` : ''}
   <details${open ? ' open' : ''}>
     <summary>Why ${esc(s.tier)}?</summary>
@@ -68,6 +79,7 @@ export function eventCardHTML(s, { plan = { status: null, rep: null }, team = []
       ${c.audienceSize ? `<p class="muted">~${Number(c.audienceSize).toLocaleString('en-US')} attendees · ${esc((c.verticals || []).join(', '))}</p>` : ''}
       ${c.notes ? `<p class="muted">${esc(c.notes)}</p>` : ''}
       ${site ? `<p><a href="${esc(site)}" target="_blank" rel="noopener">Event website ↗</a></p>` : ''}
+      ${peopleListHTML(peopleYouKnow)}
     </div>
   </details>
 </article>`;
