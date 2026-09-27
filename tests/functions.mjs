@@ -26,7 +26,7 @@ const parse = (res) => JSON.parse(res.body);
 const { t, results } = createRunner();
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
-const { checkUrl, htmlToText, arcPrompt } = ai._test;
+const { checkUrl, htmlToText, arcPrompt, intakePrompt } = ai._test;
 
 // ---- ai.js ----
 test('status reports whether a server key exists, without calling Gemini', async () => {
@@ -119,6 +119,26 @@ test('intake: a redirect to an internal address is refused', async () => {
   process.env.GEMINI_API_KEY = 'k';
   fakeFetch(() => reply(302, '', { location: 'http://127.0.0.1/admin' }));
   t.eq(parse(await ai.handler(post({ task: 'intake', name: 'X', url: 'https://example.com' }))).error, 'bad_url');
+});
+test('intake: usedPage/usedPasted honestly reflect which source(s) actually contributed', async () => {
+  process.env.GEMINI_API_KEY = 'k';
+  const html = `<html><body><p>${'A payments conference for PSPs and cross-border providers. '.repeat(6)}</p></body></html>`;
+  fakeFetch((url) => (url.includes('example.com') ? reply(200, html) : geminiReply({ city: 'Berlin' })));
+  const pageOnly = parse(await ai.handler(post({ task: 'intake', name: 'X', url: 'https://example.com' })));
+  t.eq([pageOnly.ok, pageOnly.usedPage, pageOnly.usedPasted], [true, true, false]);
+
+  fakeFetch((url) => (url.includes('example.com') ? reply(403, 'blocked') : geminiReply({ city: 'Lisbon' })));
+  const pastedOnly = parse(await ai.handler(post({ task: 'intake', name: 'X', url: 'https://example.com', pastedText: 'A payments summit for PSPs.' })));
+  t.eq([pastedOnly.ok, pastedOnly.usedPage, pastedOnly.usedPasted], [true, false, true], 'the page failed silently and fell back to pasted — must not be credited to the website');
+
+  fakeFetch((url) => (url.includes('example.com') ? reply(200, html) : geminiReply({ city: 'Paris' })));
+  const both = parse(await ai.handler(post({ task: 'intake', name: 'X', url: 'https://example.com', pastedText: 'Extra rep notes.' })));
+  t.eq([both.ok, both.usedPage, both.usedPasted], [true, true, true]);
+});
+test('intake prompt: asks for name/startDate/endDate when not given, so a link alone is enough to draft from', () => {
+  const p = intakePrompt({ name: '', startDate: '', endDate: '', calibration: [] }, 'some source text');
+  t.ok(p.includes('(not given — read the event name from the source text)'), 'flags a missing name for the AI to fill in');
+  t.ok(p.includes('"name": ""') && p.includes('"startDate": ""') && p.includes('"endDate": ""'), 'requests name/startDate/endDate in the JSON shape');
 });
 
 // ---- hubspot.js ----

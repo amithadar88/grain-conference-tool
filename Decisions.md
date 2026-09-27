@@ -261,10 +261,18 @@ closing, or polite tire-kicker?
 - Built with Claude, runs on Gemini: picking the right tool per job.
 
 ## 3b. Second AI feature: add a conference from a link
-- **Flow:** the rep enters name, dates and link. The AI reads the event's website and
-  drafts location, size, verticals and all 5 ratings, each with a reason. The rep sees
-  the score, tier and Pros / Cons / Biggest drag, edits anything, and confirms.
+- **Flow:** a link (or a pasted description) is enough — name and dates are optional at
+  this stage; the AI reads them off the source too when the rep hasn't typed them. The AI
+  reads the event's website and drafts location, size, verticals and all 5 ratings, each
+  with a reason. The rep sees the score, tier and Pros / Cons / Biggest drag, edits
+  anything, and confirms. Name and start date are still required before "Confirm & save"
+  (`validateConference`) — optional only means "not required before drafting."
   Nothing is saved without a human confirming it.
+- **Honest source label:** the review screen says "Drafted by AI from the event website,"
+  "...from the description you pasted," or both — never a hardcoded claim. The function
+  returns which source(s) actually contributed (`usedPage`/`usedPasted`), because a
+  website that failed to load and silently fell back to the pasted text must not be
+  credited as if it had been read.
 - **Why AI is the right tool:** judging who attends an event from its website
   (speaker list, agenda, "who should attend") is reading and interpreting messy text.
   No rule can do that; a language model can.

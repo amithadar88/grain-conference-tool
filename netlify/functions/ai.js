@@ -205,14 +205,15 @@ Also estimate audienceSize (total attendees, whole number), city, country, regio
 Calibration: these events were already rated by the team. Rate on the same scale.
 ${JSON.stringify(body.calibration || [], null, 1)}
 
-Event to rate: ${body.name || ''}, ${body.startDate || ''} to ${body.endDate || ''}${body.url ? `, ${body.url}` : ''}
+Event to rate: ${body.name || '(not given — read the event name from the source text)'}, ${body.startDate || '(dates not given — read them from the source text)'} to ${body.endDate || ''}${body.url ? `, ${body.url}` : ''}
 Source text:
 """
 ${sourceText}
 """
 
-If the text doesn't say something, make your best estimate and say so in the reason. Reply with JSON only, exactly this shape:
-{"city": "", "country": "", "region": "", "verticals": [""], "audienceSize": 0, "description": "",
+If the text doesn't say something, make your best estimate and say so in the reason. If the name or dates above are marked "not given," read them from the source text instead (dates as YYYY-MM-DD); use an empty string for anything you truly cannot find — the rep can always fill it in by hand. Reply with JSON only, exactly this shape:
+{"name": "", "startDate": "", "endDate": "",
+ "city": "", "country": "", "region": "", "verticals": [""], "audienceSize": 0, "description": "",
  "ratings": {"icpFit": {"score": 0, "why": ""}, "buyerAccess": {"score": 0, "why": ""}, "audienceMarket": {"score": 0, "why": ""}, "travelEffort": {"score": 0, "why": ""}}}`;
 }
 
@@ -246,7 +247,10 @@ exports.handler = async (event) => {
       const source = [pasted && `Description pasted by the rep:\n${pasted}`, pageText && `Text from the event website:\n${pageText}`].filter(Boolean).join('\n\n');
       if (!source) return json(200, { ok: false, error: 'fetch_failed' });
       const r = await gemini(key, intakePrompt(body, source), started);
-      return json(200, { ok: true, draft: r.data, model: r.model, sourceChars: source.length });
+      // usedPage/usedPasted: which source(s) actually contributed, so the client can say
+      // "from the event website" vs. "from the description you pasted" honestly, instead
+      // of always crediting the website even when it couldn't be read.
+      return json(200, { ok: true, draft: r.data, model: r.model, sourceChars: source.length, usedPage: !!pageText, usedPasted: !!pasted });
     }
     return json(400, { ok: false, error: 'bad_request' });
   } catch (e) {

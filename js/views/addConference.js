@@ -27,9 +27,9 @@ export function render(el, ctx) {
   <p><a href="#events">← Events</a></p>
   <h2>Add conference</h2>
   <form id="basics" onsubmit="return false">
-    <label>Name <input name="name" value="${esc(basics.name)}" placeholder="e.g. Merchant Risk Council Europe 2027"></label>
+    <label>Name <span class="hint">(optional — AI can read it from the link)</span> <input name="name" value="${esc(basics.name)}" placeholder="e.g. Merchant Risk Council Europe 2027"></label>
     <div class="row2">
-      <label>Start date <input name="startDate" type="date" value="${esc(basics.startDate)}"></label>
+      <label>Start date <span class="hint">(optional)</span> <input name="startDate" type="date" value="${esc(basics.startDate)}"></label>
       <label>End date <input name="endDate" type="date" value="${esc(basics.endDate)}"></label>
     </div>
     <label style="font-weight:400"><input type="checkbox" name="estimated" style="width:auto;min-height:0"${basics.estimated ? ' checked' : ''}> Dates are estimated (not announced yet)</label>
@@ -75,8 +75,9 @@ export function render(el, ctx) {
   });
 
   el.querySelector('#ai').addEventListener('click', async (e) => {
-    if (!needBasics()) return;
+    read();
     if (!basics.website && !basics.pasted) { err.textContent = 'Add the event website or paste a description.'; err.hidden = false; return; }
+    err.hidden = true;
     const btn = e.target;
     btn.disabled = true;
     btn.textContent = 'Reading the site…';
@@ -98,10 +99,23 @@ export function render(el, ctx) {
       return;
     }
     const d = r.draft;
+    // Name/dates: whatever the rep typed wins; otherwise take the AI's reading of the
+    // source — a link alone is enough to draft from. isoDate guards against the AI
+    // returning something unparseable; the review screen still requires name + start
+    // date before Confirm & save (validateConference), so nothing incomplete is saved.
+    const isoDate = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
+    const name = basics.name || String(d.name || '').trim();
+    const startDate = basics.startDate || isoDate(d.startDate);
+    const endDate = basics.endDate || isoDate(d.endDate) || startDate;
     draft = {
       source: 'ai',
+      // Honest source label (item 5): credit only what actually contributed, not always
+      // "the event website" — the site may have failed to load and silently fallen back
+      // to the pasted description, or the rep may not have given a website at all.
+      sourceLabel: r.usedPage && r.usedPasted ? 'the event website and the description you pasted'
+        : r.usedPage ? 'the event website' : 'the description you pasted',
       conf: {
-        ...emptyConf(),
+        ...emptyConf(), name, startDate, endDate,
         city: d.city, country: d.country, region: d.region, verticals: d.verticals, audienceSize: d.audienceSize, description: d.description,
         ratings: { ...Object.fromEntries(AI_FACTORS.map((k) => [k, { score: d.ratings[k].score, why: d.ratings[k].why }])), audienceSize: { score: sizeRating(d.audienceSize), why: sizeRatingWhy(d.audienceSize) } },
       },
@@ -132,7 +146,7 @@ function renderReview(el, ctx) {
   el.innerHTML = `<section class="view form">
   <p><button class="link" id="back" type="button">← Back</button></p>
   <h2>Review: ${esc(c.name)}</h2>
-  <p class="hint">${draft.source === 'ai' ? 'Drafted by AI from the event website. Check every field; you decide.' : 'Fill in the ratings; the score updates as you go.'}</p>
+  <p class="hint">${draft.source === 'ai' ? `Drafted by AI from ${esc(draft.sourceLabel)}. Check every field; you decide.` : 'Fill in the ratings; the score updates as you go.'}</p>
   <div id="dups">${duplicatesHtml(store, c.name, c.website)}</div>
   <div id="preview"></div>
   <form id="review" onsubmit="return false">
