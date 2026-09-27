@@ -6,6 +6,11 @@
 const DEFAULT_MODEL = 'gemini-3.8-flash';
 const FALLBACK_MODEL = 'gemini-3.5-flash-lite';
 const TIME_BUDGET_MS = 9000; // Netlify stops functions after ~10 s
+// Before giving up on the primary model, try it once more after this short pause — most
+// "busy/timeout" failures are a passing blip, not a real outage. process.env override lets
+// tests skip the real wait; production always uses the 800ms default.
+const RETRY_DELAY_MS = Number(process.env.AI_RETRY_DELAY_MS ?? 800);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const LABELS = [
   'New', 'Cooling - lost for now', 'Warming - new role, re-engage',
   'Warming - act now', 'Stalled - possible tire-kicker', 'Steady - nurture',
@@ -13,6 +18,76 @@ const LABELS = [
 
 const GRAIN = `Grain (grainfinance.com) is a ~25-person fintech (HQ Tel Aviv, selling in Europe and the US) that helps businesses manage FX/currency risk, with hedging built into their payment flows.
 Ideal customers: payment service providers (PSPs), cross-border payment and remittance companies, travel businesses (wholesalers, bedbanks, OTAs, tour operators, DMCs), and other companies with real FX exposure. Buyers are finance, treasury and payments leaders (CFO, VP Finance, Head of Treasury, Head of Payments).`;
+
+// The lighter fallback model has been seen inventing calendar arithmetic (e.g. "Q4 ends 31
+// Oct"). Rather than trust either model to calculate dates, we compute them in code and hand
+// them over as facts, for every prompt that reasons about time.
+function dayNumber(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Date.UTC(y, m - 1, d) / 86400000;
+}
+function daysFromToday(iso, today) { return Math.round(dayNumber(iso) - dayNumber(today)); }
+function lastDayOfMonth(year, month1based) {
+  return new Date(Date.UTC(year, month1based, 0)).toISOString().slice(0, 10);
+}
+function quarterOf(month1based) { return Math.floor((month1based - 1) / 3) + 1; }
+function quarterStart(year, q) { return `${year}-${String((q - 1) * 3 + 1).padStart(2, '0')}-01`; }
+function quarterEnd(year, q) { return lastDayOfMonth(year, q * 3); }
+
+function calendarFacts(today) {
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7));
+  const q = quarterOf(month);
+  const nextQ = q === 4 ? 1 : q + 1;
+  const nextYear = q === 4 ? year + 1 : year;
+  return {
+    currentQuarterLabel: `Q${q} ${year}`, currentQuarterEnd: quarterEnd(year, q),
+    nextQuarterLabel: `Q${nextQ} ${nextYear}`, nextQuarterStart: quarterStart(nextYear, nextQ), nextQuarterEnd: quarterEnd(nextYear, nextQ),
+  };
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// Best-effort: finds "Q3", "Q3 2027", "October", "October 2026" in free text and resolves each
+// to a concrete date (a bare mention with no year means the nearest occurrence on or after
+// today). Not every deadline phrasing is caught — this only removes date ARITHMETIC from the
+// model's job for the ones it can find; anything missed still reaches the model as plain text.
+function findDeadlineFacts(text, today) {
+  const facts = [];
+  const seen = new Set();
+  const add = (label, date) => {
+    const key = `${label}|${date}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    facts.push({ label, date, days: daysFromToday(date, today) });
+  };
+  const qRe = /\bQ([1-4])(?:\s+(\d{4}))?\b/g;
+  for (let m; (m = qRe.exec(text));) {
+    const q = Number(m[1]);
+    let year = m[2] ? Number(m[2]) : Number(today.slice(0, 4));
+    let end = quarterEnd(year, q);
+    if (!m[2] && dayNumber(end) < dayNumber(today)) { year += 1; end = quarterEnd(year, q); }
+    add(`Q${q} ${year}`, end);
+  }
+  const monRe = new RegExp(`\\b(${MONTH_NAMES.join('|')})\\b(?:\\s+(\\d{4}))?`, 'g');
+  for (let m; (m = monRe.exec(text));) {
+    const monthIdx = MONTH_NAMES.indexOf(m[1]) + 1;
+    let year = m[2] ? Number(m[2]) : Number(today.slice(0, 4));
+    let end = lastDayOfMonth(year, monthIdx);
+    if (!m[2] && dayNumber(end) < dayNumber(today)) { year += 1; end = lastDayOfMonth(year, monthIdx); }
+    add(`${m[1]} ${year}`, end);
+  }
+  return facts;
+}
+
+function calendarFactsBlock(today, deadlineText) {
+  const cf = calendarFacts(today);
+  const deadlines = deadlineText ? findDeadlineFacts(deadlineText, today) : [];
+  const deadlineLines = deadlines.map((d) => `- "${d.label}" -> ${d.date} (${d.days} days from today)`);
+  return `Calendar facts, already computed — use these, do not calculate any date yourself:
+- Today: ${today}
+- Current quarter: ${cf.currentQuarterLabel}, ends ${cf.currentQuarterEnd}
+- Next quarter: ${cf.nextQuarterLabel}, ${cf.nextQuarterStart} to ${cf.nextQuarterEnd}${deadlineLines.length ? `\n${deadlineLines.join('\n')}` : ''}`;
+}
 
 function fail(code, retryable = false) {
   const e = new Error(code);
@@ -70,12 +145,15 @@ async function callGemini(key, model, prompt, ms) {
   }
 }
 
-// Try the configured model, then the fallback once, within the time budget.
+// Try the configured model, retry it once more after a short pause, then fall back once —
+// all within the time budget. Only a genuinely repeated failure reaches the lighter model.
 async function gemini(key, prompt, started) {
   const primary = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  const models = primary === FALLBACK_MODEL ? [primary] : [primary, FALLBACK_MODEL];
+  const models = primary === FALLBACK_MODEL ? [primary] : [primary, primary, FALLBACK_MODEL];
   let last = fail('timeout');
-  for (const model of models) {
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    if (i === 1 && model === primary) await sleep(RETRY_DELAY_MS);
     const left = TIME_BUDGET_MS - (Date.now() - started);
     if (left < 2000) break;
     try {
@@ -107,8 +185,10 @@ Label meanings:
 - Stalled - possible tire-kicker: friendly, repeated, but no concrete progress.
 - Steady - nurture: genuine interest, no urgency yet.
 
-Today is ${day}. Judge every deadline in the notes against today's date: if one is close or has passed, say so in the arc and let it drive the label and the timing of the next step.
-Write every deadline as an explicit date plus the time from today, e.g. "Q3 ends 30 Sep 2026, 4 days from today". Never use only relative wording ("in 4 days", "next week"): this summary is saved and read again later.
+${calendarFactsBlock(day, encounters.map((e) => e.note || '').join(' '))}
+
+Judge every deadline in the notes against today's date using the calendar facts above: if one is close or has passed, say so in the arc and let it drive the label and the timing of the next step.
+Write every deadline as an explicit date plus the time from today, e.g. "Q3 ends 30 Sep 2026, 4 days from today" — use the facts above, do not calculate any date yourself. Never use only relative wording ("in 4 days", "next week"): this summary is saved and read again later.
 
 Contact: ${person.name || ''}${person.title ? `, ${person.title}` : ''}${person.company ? ` at ${person.company}` : ''}
 Rules label: ${rules.label || ''}
@@ -136,7 +216,9 @@ ${ai ? `AI relationship read: ${ai.label} — ${ai.arc || ''} Suggested next ste
 Meetings:
 ${lines.join('\n')}
 
-Today is ${day}. The email is from ${rep || 'the rep'} at Grain.
+${calendarFactsBlock(day, encounters.map((e) => e.note || '').join(' '))}
+
+The email is from ${rep || 'the rep'} at Grain. If you reference a deadline, use the calendar facts above rather than calculating the date yourself.
 Write a natural, short follow-up: a subject line, and a body under 120 words that references something specific from the notes and ends with one concrete next step (e.g. proposing a call, sending what they asked for, confirming a date). No gendered pronouns.
 Reply with JSON only, exactly these keys:
 {"subject": "one line", "body": "under 120 words"}`;
@@ -260,4 +342,4 @@ exports.handler = async (event) => {
 };
 
 // Exported for tests/functions.mjs only.
-exports._test = { checkUrl, htmlToText, parseJsonText, arcPrompt, followupPrompt, intakePrompt };
+exports._test = { checkUrl, htmlToText, parseJsonText, arcPrompt, followupPrompt, intakePrompt, calendarFacts, findDeadlineFacts };

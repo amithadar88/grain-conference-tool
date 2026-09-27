@@ -15,6 +15,11 @@ let filterBucket = ''; // '' (All) | 'Warming' | 'Cooling' | 'Stalled' | 'Steady
 // (store.setAiSummary) whichever page happens to be open when it arrives.
 const pendingArc = new Map();
 
+// Kept in sync with netlify/functions/ai.js's FALLBACK_MODEL — the lighter free-tier model
+// used only when the main model is busy on both tries; its date arithmetic is weaker, so a
+// summary that came from it says so on the card (Task 15 item 4c).
+const FALLBACK_MODEL = 'gemini-3.5-flash-lite';
+
 // "Warming - act now" -> "Warming" (matches signalClass's own bucketing, used for filter chips).
 const labelBucket = (label) => label.split(' ')[0];
 const lastDate = (r) => r.encounters.at(-1).date;
@@ -276,7 +281,8 @@ function renderAi(box, ctx, person, encounters, signal) {
        ${s.agreesWithRules ? '' : `<p class="disagree">AI disagrees with the rules (${esc(signal.label)}): ${esc(s.disagreementReason)}</p>`}
        <p>${esc(s.arc)}</p>
        <p><b>Next step:</b> ${esc(s.nextStep)}</p>
-       <p class="hint">AI · ${esc(fmtDate(s.generatedAt))} · based on ${s.basedOnEncounters} meetings${stale ? ' · new meeting since this summary' : ''}</p>`
+       <p class="hint">AI · ${esc(fmtDate(s.generatedAt))} · based on ${s.basedOnEncounters} meetings${stale ? ' · new meeting since this summary' : ''}</p>
+       ${s.model === FALLBACK_MODEL ? '<p class="hint">Lighter model (main model busy). Regenerate for a fuller read.</p>' : ''}`
     : '<p class="hint">AI reads the meeting notes and judges whether this is warming or a tire-kicker.</p>';
   box.innerHTML = `<div class="box ai${stale ? ' stale' : ''}"><b>AI summary</b>${body}
     ${generating ? '<p class="hint">Generating…</p>' : ''}

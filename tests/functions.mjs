@@ -4,6 +4,8 @@
 import { createRequire } from 'node:module';
 import { createRunner } from './runner.js';
 
+process.env.AI_RETRY_DELAY_MS = '0'; // skip the real pause before the primary model's own retry
+
 const require = createRequire(import.meta.url);
 const ai = require('../netlify/functions/ai.js');
 const hubspot = require('../netlify/functions/hubspot.js');
@@ -26,7 +28,7 @@ const parse = (res) => JSON.parse(res.body);
 const { t, results } = createRunner();
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
-const { checkUrl, htmlToText, arcPrompt, intakePrompt } = ai._test;
+const { checkUrl, htmlToText, arcPrompt, intakePrompt, followupPrompt, calendarFacts, findDeadlineFacts } = ai._test;
 
 // ---- ai.js ----
 test('status reports whether a server key exists, without calling Gemini', async () => {
@@ -54,18 +56,25 @@ test('the rep\'s own key overrides the server key', async () => {
   await ai.handler(post({ task: 'arc', key: 'my-key', encounters: [] }));
   t.eq(used, 'my-key');
 });
-test('429 from both models -> busy ("AI is busy, try again in a minute")', async () => {
+test('429 from primary, retried once, then both attempts busy -> falls back; 429 there too -> busy', async () => {
   process.env.GEMINI_API_KEY = 'k';
   fakeFetch(() => reply(429, { error: { message: 'quota' } }));
   const r = parse(await ai.handler(post({ task: 'arc', encounters: [] })));
-  t.eq([r.error, calls.length], ['busy', 2]);
-  t.ok(calls[1].url.includes('gemini-3.5-flash-lite'), 'fell back to flash-lite');
+  t.eq([r.error, calls.length], ['busy', 3]);
+  t.ok(calls[0].url.includes('3.8') && calls[1].url.includes('3.8'), 'primary model tried twice before falling back');
+  t.ok(calls[2].url.includes('gemini-3.5-flash-lite'), 'fell back to flash-lite only after both primary attempts failed');
 });
-test('primary model 503, fallback works', async () => {
+test('primary model 503 on both attempts, fallback works', async () => {
   process.env.GEMINI_API_KEY = 'k';
   fakeFetch((url) => (url.includes('3.8') ? reply(503, 'down') : geminiReply({ ok: 1 })));
   const r = parse(await ai.handler(post({ task: 'arc', encounters: [] })));
-  t.eq([r.ok, r.model], [true, 'gemini-3.5-flash-lite']);
+  t.eq([r.ok, r.model, calls.length], [true, 'gemini-3.5-flash-lite', 3]);
+});
+test('primary model succeeds on its retry -> no fallback needed', async () => {
+  process.env.GEMINI_API_KEY = 'k';
+  fakeFetch((url, opts, n) => (n === 1 ? reply(503, 'down') : geminiReply({ ok: 1 })));
+  const r = parse(await ai.handler(post({ task: 'arc', encounters: [] })));
+  t.eq([r.ok, r.model, calls.length], [true, 'gemini-3.8-flash', 2]);
 });
 test('invalid key -> bad_key, no retry', async () => {
   process.env.GEMINI_API_KEY = 'k';
@@ -82,7 +91,6 @@ test('followup: returns subject + body, sends the key in a header', async () => 
   t.ok(!calls[0].url.includes('server-key'), 'key not in URL');
 });
 test('followup prompt: never invents facts, includes the AI read when given', () => {
-  const { followupPrompt } = ai._test;
   const p = followupPrompt({ today: '2026-09-26', person: { name: 'Ahmed' }, encounters: [], rules: { label: 'Steady - nurture' }, ai: { label: 'Warming - act now', arc: 'x', nextStep: 'Send proposal' }, rep: 'Maya' });
   t.ok(/never invent/i.test(p), 'guards against invented facts');
   t.ok(p.includes('Send proposal'), 'includes the AI next step when given');
@@ -195,13 +203,41 @@ test('hubspot: contact without email is reported, not sent', async () => {
 
 test('arc prompt: includes today\'s date so deadlines are judged against it', () => {
   const p = arcPrompt({ today: '2026-09-26', person: { name: 'Ahmed' }, encounters: [], rules: { label: 'Steady - nurture', reasons: [] } });
-  t.ok(p.includes('Today is 2026-09-26'), 'has today');
-  t.ok(/deadline/i.test(p.split('Today is')[1]), 'asks to weigh deadlines against today');
+  t.ok(p.includes('- Today: 2026-09-26'), 'has today');
+  t.ok(/deadline/i.test(p.split('Calendar facts')[1]), 'asks to weigh deadlines against today');
 });
 test('arc prompt: deadlines as an explicit date plus relative time (summaries are read later)', () => {
   const p = arcPrompt({ today: '2026-09-26', person: {}, encounters: [], rules: {} });
   t.ok(p.includes('"Q3 ends 30 Sep 2026, 4 days from today"'), 'gives the example format');
   t.ok(/never.*only relative/i.test(p), 'forbids relative-only wording');
+});
+test('arc/followup prompts: pre-computed calendar facts, not left for the model to calculate (Task 15 item 4a)', () => {
+  const cf = calendarFacts('2026-09-26');
+  t.eq([cf.currentQuarterLabel, cf.currentQuarterEnd, cf.nextQuarterLabel, cf.nextQuarterStart, cf.nextQuarterEnd],
+    ['Q3 2026', '2026-09-30', 'Q4 2026', '2026-10-01', '2026-12-31']);
+  // The reported bug: the fallback model once said "Q4 ends 31 Oct" — Q4 2026 really ends 31 Dec.
+  const q4 = calendarFacts('2026-11-01');
+  t.eq(q4.currentQuarterEnd, '2026-12-31', 'Q4 end date is computed in code, never left to the model');
+
+  const p = arcPrompt({ today: '2026-09-26', person: {}, encounters: [{ note: 'Wants a proposal before end of Q3.' }], rules: {} });
+  t.ok(p.includes('do not calculate any date yourself'), 'tells the model to use the facts, not compute them');
+  t.ok(p.includes('- Current quarter: Q3 2026, ends 2026-09-30'), 'gives the current quarter fact');
+  t.ok(p.includes('- Next quarter: Q4 2026, 2026-10-01 to 2026-12-31'), 'gives the next quarter fact');
+  t.ok(p.includes('"Q3 2026" -> 2026-09-30 (4 days from today)'), 'resolves the deadline mentioned in the notes to a concrete date');
+
+  const fu = followupPrompt({ today: '2026-09-26', person: {}, encounters: [], rules: {}, rep: 'Maya' });
+  t.ok(fu.includes('- Today: 2026-09-26'), 'followup prompt gets the same calendar facts');
+});
+test('findDeadlineFacts: resolves quarter and month mentions to concrete dates, rolling forward a bare mention that has already passed', () => {
+  const facts = findDeadlineFacts('Send it before end of Q1. Also asked about January pricing.', '2026-09-26');
+  const q1 = facts.find((f) => f.label.startsWith('Q1'));
+  const jan = facts.find((f) => f.label.startsWith('January'));
+  t.eq(q1.label, 'Q1 2027', 'Q1 2026 already ended, so a bare "Q1" rolls to next year');
+  t.eq(q1.date, '2027-03-31');
+  t.eq(jan.label, 'January 2027', 'same rollover for a bare month name');
+  t.eq(jan.date, '2027-01-31');
+  const explicit = findDeadlineFacts('Renewal due Q3 2025.', '2026-09-26');
+  t.eq(explicit[0], { label: 'Q3 2025', date: '2025-09-30', days: -361 }, 'an explicit year is never rolled forward, even if it is in the past');
 });
 test('hubspot: HubSpot 503 -> the status and reason are kept, marked retryable', async () => {
   fakeFetch((url) => (url.includes('/properties/') ? reply(200, {}) : url.endsWith('/search') ? reply(503, { message: 'Service Unavailable' }) : reply(500, {})));
