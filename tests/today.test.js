@@ -33,7 +33,10 @@ export default function todayTests(t, data) {
   });
 
   t.test('Without an AI summary, Ahmed (rules: Steady) is not in Act now', () => {
-    const store = fresh();
+    // Seed now ships a real AI override for Ahmed (Task 15), so this checks the
+    // pre-AI state directly: no aiSummaries at all, same as a brand-new contact.
+    const noAiSeed = { conferences: data.conferences, contacts: { ...data.contacts, aiSummaries: {} } };
+    const store = createStore({ seed: noAiSeed, storage: memoryStorage(), prefix: 'grain.test.' });
     const ids = actNowRows(store, TODAY).map((r) => r.person.id);
     t.ok(!ids.includes('p-ahmed'), 'Ahmed excluded until the AI overrides');
   });
