@@ -79,7 +79,13 @@ a { color: var(--brand); }
 .view-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* Buttons and inputs */
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--line); background: #fff; color: var(--text); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+/* Secondary (default) buttons read as clearly clickable on their own: navy text, a
+   brand-coloured border (not the near-invisible --line grey used for plain dividers),
+   and a light blue-tint hover/focus. Truly disabled ones (:disabled — data-needs-net
+   toggles this) stay visually distinct via opacity + not-allowed, guarded out of the
+   hover rule so a faded button never lights up on mouseover. */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--brand); background: #fff; color: var(--heading); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.btn:not(.primary):not(:disabled):hover, .btn:not(.primary):not(:disabled):focus-visible { background: var(--brand-2); }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
 .btn.big { width: 100%; min-height: 56px; font-size: 1.1rem; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -125,7 +131,8 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 /* Rep assignment: a compact multi-select dropdown (same shape as the header user menu)
    instead of one chip per team member, so it doesn't crowd out as the team grows. */
 .rep-picker { position: relative; }
-.rep-picker-btn { display: flex; align-items: center; gap: 6px; min-height: 36px; max-width: 100%; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: .9rem; color: var(--text); cursor: pointer; }
+.rep-picker-btn { display: flex; align-items: center; gap: 6px; min-height: 36px; max-width: 100%; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--brand); background: #fff; font: inherit; font-size: .9rem; color: var(--heading); cursor: pointer; }
+.rep-picker-btn:hover, .rep-picker-btn:focus-visible { background: var(--brand-2); }
 .rep-picker-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rep-picker-btn .chev { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .rep-picker-btn[aria-expanded="true"] { border-color: var(--brand); color: var(--brand); }
