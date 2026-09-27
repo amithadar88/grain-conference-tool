@@ -56,6 +56,15 @@ export default function storeTests(t, data) {
     store.resetOverlay();
     t.eq(store.conferencePlan('iamtn-summit-2026'), { status: 'going', reps: ['Shira'] });
   });
+  t.test('Seeded AI summaries (Task 15) load for a fresh visitor and survive Reset demo data', () => {
+    const { store } = fresh();
+    for (const id of ['p-ahmed', 'p-mark', 'p-dana', 'p-jonathan']) {
+      const s = store.aiSummary(id);
+      t.ok(s && s.label && s.arc && s.nextStep, `${id} has a seeded summary`);
+    }
+    store.resetOverlay();
+    t.ok(store.aiSummary('p-ahmed').label === 'Warming - act now', 'seeded summaries are not part of the overlay, so Reset leaves them in place');
+  });
   t.test('Corrupted saved data does not crash the app', () => {
     const storage = memoryStorage();
     storage.setItem('grain.test.overlay.v1', '{not json');

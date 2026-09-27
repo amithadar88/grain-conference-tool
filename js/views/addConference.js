@@ -1,6 +1,6 @@
 // Add conference: name, dates, link -> AI draft (or manual) -> review with live score -> confirm.
 // Nothing is saved without the rep confirming.
-import { scoreAll, sizeRating, sizeRatingWhy, REGIONS, FACTOR_LABELS } from '../scoring.js';
+import { scoreAll, sizeRating, sizeRatingWhy, REGIONS, FACTOR_LABELS, dayNumber } from '../scoring.js';
 import { findConferenceDuplicates, norm } from '../matching.js';
 import { validateDraft, validateConference } from '../validate.js';
 import { aiIntake } from '../api.js';
@@ -18,6 +18,16 @@ function duplicatesHtml(store, name, website) {
   const d = findConferenceDuplicates({ name, website }, store.conferences());
   if (!d.length) return '';
   return `<div class="match low">⚠ Looks similar to ${d.map((x) => `<b>${esc(x.conf.name)}</b> (same ${x.reason})`).join(', ')}. You can still add it.</div>`;
+}
+
+// A long-running "conference" is often a whole series scraped as one page (e.g. a
+// multi-week roadshow); flag it, but never block saving — the rep decides.
+export function spanWarningHtml(startDate, endDate) {
+  if (!startDate || !endDate) return '';
+  const gapDays = dayNumber(endDate) - dayNumber(startDate);
+  if (gapDays <= 7) return '';
+  const days = gapDays + 1; // inclusive of both the start and end day
+  return `<div class="match low">⚠ This spans ${days} days. Check the dates: the page may describe a series, not one event.</div>`;
 }
 
 export function render(el, ctx) {
@@ -155,6 +165,7 @@ function renderReview(el, ctx) {
       <label>Start <input name="startDate" type="date" value="${esc(c.startDate)}"></label>
       <label>End <input name="endDate" type="date" value="${esc(c.endDate)}"></label>
     </div>
+    <div id="span-warn"></div>
     <div class="row2">
       <label>City <input name="city" value="${esc(c.city)}"></label>
       <label>Country <input name="country" value="${esc(c.country)}"></label>
@@ -201,6 +212,7 @@ function renderReview(el, ctx) {
       ? eventCardHTML(scoreAll([...store.conferences(), { ...conf, id: '__draft' }]).find((s) => s.id === '__draft'), { controls: false, open: true, today: ctx.today })
       : '<p class="box muted">Set the region, audience size and all four ratings to see the score, tier and Pros / Cons / Biggest drag.</p>';
     el.querySelector('#dups').innerHTML = duplicatesHtml(store, conf.name, conf.website);
+    el.querySelector('#span-warn').innerHTML = spanWarningHtml(conf.startDate, conf.endDate);
   };
   form.addEventListener('input', preview);
   preview();
