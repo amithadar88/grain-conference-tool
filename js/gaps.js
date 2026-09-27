@@ -10,6 +10,15 @@ function quarterOf(iso) {
   return `${iso.slice(0, 4)} Q${q}`;
 }
 
+// "2026 Q3" -> "2026-09-30" (the quarter's last calendar day). Passing the 0-indexed
+// month right after the quarter's last month with day 0 rolls back to that last day,
+// handling variable month lengths (and Q4 rolling into next year) for free.
+export function quarterEndDate(quarter) {
+  const [year, qtr] = quarter.split(' ');
+  const d = new Date(Date.UTC(+year, +qtr.slice(1) * 3, 0));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
 // Every quarter touched by the window, in chronological order (may include a partial
 // quarter at either end — that's fine, it only ever looks at the months actually in scope).
 function quartersInWindow(win) {
@@ -22,20 +31,24 @@ function quartersInWindow(win) {
 }
 
 /**
- * store: the app store (conferences() + conferencePlan()). today/win unused directly but
- * kept for symmetry with the other Today/Plan selectors and future "as of" filtering.
+ * store: the app store (conferences() + conferencePlan()). win unused directly but kept
+ * for symmetry with the other Today/Plan selectors. Deliberately takes no `today`: which
+ * gaps exist is a fact about the data, independent of the date; "is this quarter still
+ * worth flagging" is a display decision the view layer makes (quarterLines(gaps, today)
+ * drops one ending within 30 days — nothing left to act on).
  * Every gap carries the scored events behind it, not just a count or a name, so the view
  * layer can state a fact ("N events, none marked Going") and name the highest-scored
- * options — never a label the data can't prove. Returns:
+ * options — never a label the data can't prove, and never a C/D option (that would
+ * contradict our own tiers: "highest-scored" only ever means A+/A/B). Returns:
  *   unassigned: top-tier (A+/A) events in the window with nobody assigned, earliest first.
  *   verticals: [{ vertical, events }] — core verticals with an A/B event but none marked
- *     Going, events sorted highest-scored first.
- *   quarters: [{ quarter, events }] — quarters (in the window) with no Going event at all;
- *     events is everything in that quarter (any tier), highest-scored first, so the view
- *     can point at the best options even though none are staffed yet.
+ *     Going, events (already A/B by definition) sorted highest-scored first.
+ *   quarters: [{ quarter, options }] — quarters (in the window) with no Going event at
+ *     all (checked against every event, any tier); options is the A+/A/B events in that
+ *     quarter, highest-scored first — may be empty if the quarter's only events are C/D.
  *   regionNames: regions with no A-tier event at all.
- *   regionEvents: every event (any tier) in one of those regions, highest-scored first —
- *     paired with regionNames for "highest-scored options there".
+ *   regionOptions: the A+/A/B events (any of those regions), highest-scored first —
+ *     paired with regionNames for "highest-scored options there"; may be empty.
  *   quietMonths: months with no A/B event at all.
  */
 export function computeGaps(store, win = WINDOW) {
@@ -60,14 +73,14 @@ export function computeGaps(store, win = WINDOW) {
     .map((quarter) => {
       const events = inWin.filter((s) => quarterOf(s.conf.startDate) === quarter);
       if (events.some((s) => planOf(s.id).status === 'going')) return null;
-      return { quarter, events: [...events].sort(byScoreDesc) };
+      return { quarter, options: events.filter(isAB).sort(byScoreDesc) };
     })
     .filter(Boolean);
 
   const regionNames = REGIONS.filter((r) => !inWin.some((s) => s.conf.region === r && isTopTier(s)));
-  const regionEvents = inWin.filter((s) => regionNames.includes(s.conf.region)).sort(byScoreDesc);
+  const regionOptions = inWin.filter((s) => regionNames.includes(s.conf.region) && isAB(s)).sort(byScoreDesc);
 
   const quietMonths = windowMonths(win).filter((ym) => !inWin.some((s) => s.conf.startDate.slice(0, 7) === ym && isAB(s)));
 
-  return { unassigned, verticals, quarters, regionNames, regionEvents, quietMonths };
+  return { unassigned, verticals, quarters, regionNames, regionOptions, quietMonths };
 }

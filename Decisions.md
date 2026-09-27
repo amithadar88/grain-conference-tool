@@ -509,6 +509,16 @@ closing, or polite tire-kicker?
   Plan-only (Today keeps its 3-line condensed version: unassigned, verticals, quarters).
 - **Filters (section 1) never touch this:** Gaps always reads the whole team's plan,
   independent of the Plan page's own Mine/Status/Tier view filters.
+- **"Highest-scored options" only ever means A+/A/B — never C or D.** Naming a C/D event
+  as an "option" would contradict our own tiers (the whole point of scoring is that C/D
+  aren't worth attending). When a quarter or region's only events are C/D, the line says
+  "No A/B options." instead of naming one anyway. `computeGaps()` filters to A+/A/B before
+  ranking, so the view layer can't accidentally surface a low-tier "highest score."
+- **A quarter gap is dropped once it's within 30 days of ending.** There's no time left to
+  act on it, so flagging it any longer would be noise, not a fact worth a rep's attention.
+  This is a display decision, not a data one — `computeGaps()` still returns the quarter
+  (which quarters have no Going event is a fact independent of the date); `quarterLines()`
+  takes `today` and filters it out there, right where the sentence gets built.
 
 ## 4h. Navigation order: people/actions left, conferences right
 - New order: Today, Contacts, Capture (raised centre on mobile), Events, Plan — same

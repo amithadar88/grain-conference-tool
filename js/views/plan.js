@@ -1,7 +1,7 @@
 // Plan tab: 13-month timeline by tier, clusters, status/rep, and a gaps list that
 // measures the team's plan (not just which events exist).
-import { scoreAll, windowMonths, monthLabel, inWindow } from '../scoring.js';
-import { computeGaps } from '../gaps.js';
+import { scoreAll, windowMonths, monthLabel, inWindow, dayNumber } from '../scoring.js';
+import { computeGaps, quarterEndDate } from '../gaps.js';
 import { peopleYouKnow } from '../eventHistory.js';
 import { esc, fmtRange, tierClass } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
@@ -33,16 +33,20 @@ export function verticalLines(gaps) {
   });
 }
 
-export function quarterLines(gaps) {
-  return gaps.quarters.map((q) => {
-    const options = q.events.length ? ` Highest-scored options: ${scoredEvents(q.events)}.` : '';
-    return `${quarterLabel(q.quarter)}: no events marked Going.${options}`;
-  });
+// A quarter that's about to end (or already has) isn't worth flagging any more — there's
+// no time left to act on it, so it's dropped rather than shown as a stale, unfixable gap.
+export function quarterLines(gaps, today) {
+  return gaps.quarters
+    .filter((q) => dayNumber(quarterEndDate(q.quarter)) - dayNumber(today) > 30)
+    .map((q) => {
+      const options = q.options.length ? ` Highest-scored options: ${scoredEvents(q.options)}.` : ' No A/B options.';
+      return `${quarterLabel(q.quarter)}: no events marked Going.${options}`;
+    });
 }
 
 export function regionsLine(gaps) {
   if (!gaps.regionNames.length) return '';
-  const options = gaps.regionEvents.length ? ` Highest-scored there: ${scoredEvents(gaps.regionEvents)}.` : '';
+  const options = gaps.regionOptions.length ? ` Highest-scored there: ${scoredEvents(gaps.regionOptions)}.` : ' No A/B options.';
   return `No A-tier events in ${esc(gaps.regionNames.join(', '))}.${options}`;
 }
 
@@ -53,8 +57,8 @@ export function monthsLine(gaps) {
 
 // Full detail: every applicable line, equal weight (no more "actionable" vs. "market
 // notes" split — a region or month gap is as much a fact as an unassigned event).
-export function gapsHTML(gaps) {
-  const lines = [unassignedLine(gaps), ...verticalLines(gaps), ...quarterLines(gaps), regionsLine(gaps), monthsLine(gaps)].filter(Boolean);
+export function gapsHTML(gaps, today) {
+  const lines = [unassignedLine(gaps), ...verticalLines(gaps), ...quarterLines(gaps, today), regionsLine(gaps), monthsLine(gaps)].filter(Boolean);
   return `<b>Gaps</b>${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>` : '<p class="hint">No gaps in the plan right now.</p>'}`;
 }
 
@@ -125,7 +129,7 @@ export function render(el, ctx) {
 
   el.innerHTML = `<section class="view">
   <h2>Plan · ${monthLabel(months[0])} – ${monthLabel(months[months.length - 1])}</h2>
-  <div class="gaps">${gapsHTML(computeGaps(store))}</div>
+  <div class="gaps">${gapsHTML(computeGaps(store), ctx.today)}</div>
   ${filtersHTML()}
   <div class="timeline">${timelineHTML()}</div>
   <dialog class="sheet" id="detail" aria-label="Event details">
@@ -175,7 +179,7 @@ export function render(el, ctx) {
   bindEventCardControls(body, store, () => {
     drawDetail();
     redrawTimeline();
-    gapsBox.innerHTML = gapsHTML(computeGaps(store));
+    gapsBox.innerHTML = gapsHTML(computeGaps(store), ctx.today);
   });
   dialog.querySelector('.sheet-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); }); // tap on the dimmed area

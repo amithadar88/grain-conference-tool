@@ -1,6 +1,8 @@
 import { createStore, memoryStorage } from '../js/store.js';
-import { computeGaps } from '../js/gaps.js';
+import { computeGaps, quarterEndDate } from '../js/gaps.js';
 import { gapsHTML, unassignedLine, verticalLines, quarterLines, regionsLine, monthsLine } from '../js/views/plan.js';
+
+const TODAY = '2026-09-26';
 
 export default function gapsTests(t, data) {
   const seed = { conferences: data.conferences, contacts: data.contacts };
@@ -31,18 +33,27 @@ export default function gapsTests(t, data) {
     store.setConferencePlan('tradetech-fx-2027', { status: 'going', reps: ['Daniel'] });
     t.eq(computeGaps(store).verticals, []);
   });
-  t.test('Quarters with no Going event at all: Q3 2026 (partial), Q2 2027, Q3 2027 — Q4 2026 and Q1 2027 are covered by the baseline; each carries every event in that quarter, highest-scored first', () => {
+  t.test('Quarters with no Going event at all: Q3 2026 (partial), Q2 2027, Q3 2027 — Q4 2026 and Q1 2027 are covered by the baseline; each carries only its A+/A/B events ("options"), highest-scored first', () => {
     const g = computeGaps(fresh());
     t.eq(g.quarters.map((q) => q.quarter), ['2026 Q3', '2027 Q2', '2027 Q3']);
     const q2 = g.quarters.find((q) => q.quarter === '2027 Q2');
-    t.eq(q2.events[0].id, 'money2020-europe-2027'); // score 98, highest in that quarter
-    t.ok(q2.events.every((s, i) => i === 0 || s.score <= q2.events[i - 1].score), 'sorted highest-scored first');
+    t.eq(q2.options[0].id, 'money2020-europe-2027'); // score 98, highest in that quarter
+    t.ok(q2.options.every((s, i) => i === 0 || s.score <= q2.options[i - 1].score), 'sorted highest-scored first');
+    t.ok(!q2.options.some((s) => s.id === 'saastr-2027'), 'D-tier events are never options, however high they\'d otherwise rank');
+    const q3_2026 = g.quarters.find((q) => q.quarter === '2026 Q3');
+    t.eq(q3_2026.options, [], 'its only event (Sibos, C-tier) is not an A/B option');
   });
-  t.test('Regions with no A-tier event at all, plus every event in those regions, highest-scored first', () => {
+  t.test('quarterEndDate: last calendar day of the quarter, including the Q4-into-January rollover', () => {
+    t.eq(quarterEndDate('2026 Q3'), '2026-09-30');
+    t.eq(quarterEndDate('2027 Q1'), '2027-03-31');
+    t.eq(quarterEndDate('2026 Q4'), '2026-12-31');
+  });
+  t.test('Regions with no A-tier event at all, plus their A+/A/B events ("options"), highest-scored first', () => {
     const g = computeGaps(fresh());
     t.eq(g.regionNames, ['North America', 'Middle East', 'Asia-Pacific']);
-    t.ok(g.regionEvents.every((s) => g.regionNames.includes(s.conf.region)), 'only events from the flagged regions');
-    t.ok(g.regionEvents.every((s, i) => i === 0 || s.score <= g.regionEvents[i - 1].score), 'sorted highest-scored first');
+    t.ok(g.regionOptions.every((s) => g.regionNames.includes(s.conf.region)), 'only events from the flagged regions');
+    t.ok(g.regionOptions.every((s) => ['A+', 'A', 'B'].includes(s.tier)), 'never a C/D option');
+    t.ok(g.regionOptions.every((s, i) => i === 0 || s.score <= g.regionOptions[i - 1].score), 'sorted highest-scored first');
   });
   t.test('Quiet months: no A/B event at all — includes the user\'s own example (Dec, Jul, Aug)', () => {
     const g = computeGaps(fresh());
@@ -72,26 +83,41 @@ export default function gapsTests(t, data) {
     const [line] = verticalLines(g);
     t.eq(line, 'FX: 1 A/B event, none marked Going: <a href="#events/tradetech-fx-2027">TradeTech FX 2027</a>.');
   });
-  t.test('Quarter line: "Q<n> <year>" order, fact then highest-scored options, capped at 3', () => {
+  t.test('Quarter line: "Q<n> <year>" order, fact then highest-scored A+/A/B options, capped at 3, never a C/D name', () => {
     const g = computeGaps(fresh());
-    const lines = quarterLines(g);
-    t.eq(lines[0].startsWith('Q3 2026: no events marked Going.'), true, 'quarter label reads "Q<n> <year>", not the internal "<year> Q<n>"');
+    const lines = quarterLines(g, TODAY);
     const q2Line = lines.find((l) => l.startsWith('Q2 2027'));
     t.eq((q2Line.match(/<a /g) || []).length, 3, 'at most 3 named options even though 12 events exist in Q2 2027');
     t.ok(q2Line.includes('Money20/20 Europe 2027 (A+ 98)'), 'names the highest-scored option with its tier and score');
+    const q3_2027 = lines.find((l) => l.startsWith('Q3 2027'));
+    t.ok(!q3_2027.includes('FinovateFall'), 'FinovateFall is D-tier — never named as a "highest-scored" option');
   });
-  t.test('Regions line: named regions, then highest-scored options there, capped at 3', () => {
+  t.test('Quarter line: "No A/B options." when the quarter\'s only events are C/D (and the quarter isn\'t about to end)', () => {
+    const g = computeGaps(fresh());
+    const lines = quarterLines(g, '2026-01-01'); // Q3 2026 (ends Sep 30) is far off from this date
+    t.eq(lines[0], 'Q3 2026: no events marked Going. No A/B options.');
+  });
+  t.test('Quarter line is dropped once it ends within 30 days of today (nothing left to act on)', () => {
+    const g = computeGaps(fresh());
+    const justOutside = quarterLines(g, '2026-08-30'); // Q3 2026 ends 2026-09-30, 31 days out: still shown
+    const justInside = quarterLines(g, '2026-09-01'); // 29 days out: dropped
+    t.ok(justOutside.some((l) => l.startsWith('Q3 2026')), 'still 31 days from the quarter\'s end: shown');
+    t.ok(!justInside.some((l) => l.startsWith('Q3 2026')), 'only 29 days from the quarter\'s end: dropped');
+    t.ok(justInside.some((l) => l.startsWith('Q2 2027')), 'quarters further out are unaffected');
+  });
+  t.test('Regions line: named regions, then highest-scored A+/A/B options there, capped at 3, never a C/D name', () => {
     const g = computeGaps(fresh());
     const line = regionsLine(g);
     t.ok(line.startsWith('No A-tier events in North America, Middle East, Asia-Pacific.'), 'states the fact plainly, no interpretation');
     t.eq((line.match(/<a /g) || []).length, 3, 'at most 3 named options');
+    t.ok(!line.includes('Sibos'), 'Sibos is C-tier — never named as a "highest-scored" option');
   });
   t.test('Months line: fact only, no "quiet season" or any other interpretation', () => {
     const g = computeGaps(fresh());
     t.eq(monthsLine(g), 'No A/B events in: Sep 2026, Dec 2026, Jan 2027, Jul 2027, Aug 2027.');
   });
   t.test('No interpretive language anywhere in the full Gaps box', () => {
-    const html = gapsHTML(computeGaps(fresh()));
+    const html = gapsHTML(computeGaps(fresh()), TODAY);
     t.ok(!/quiet season|market note/i.test(html), 'no labels the data can\'t prove');
   });
   t.test('A line with nothing to report is omitted, not shown empty', () => {

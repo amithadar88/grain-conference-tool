@@ -128,9 +128,9 @@ function comingUpHTML(store, today) {
 // Short: only the actionable lines (unassigned top events, unstaffed verticals, empty
 // quarters), same fact+action phrasing as the full list on Plan (shared with plan.js so
 // the two pages never say the same gap two different ways). Regions/months are Plan-only.
-function gapsHTML(store) {
+function gapsHTML(store, today) {
   const gaps = computeGaps(store);
-  const lines = [unassignedLine(gaps), ...verticalLines(gaps), ...quarterLines(gaps)].filter(Boolean);
+  const lines = [unassignedLine(gaps), ...verticalLines(gaps), ...quarterLines(gaps, today)].filter(Boolean);
   return `<div class="box"><b>Plan gaps</b>
     ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>` : '<p class="hint">No gaps in the plan right now.</p>'}
     <p><a href="#plan">See Plan →</a></p></div>`;
@@ -145,7 +145,7 @@ export function render(el, ctx) {
     <div id="guide-wrap">${guideHTML(store)}</div>
     ${actNowHTML(rows)}
     ${comingUpHTML(store, ctx.today)}
-    ${gapsHTML(store)}
+    ${gapsHTML(store, ctx.today)}
   </section>`;
 
   const guideWrap = el.querySelector('#guide-wrap');
