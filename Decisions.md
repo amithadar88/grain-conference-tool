@@ -358,6 +358,40 @@ closing, or polite tire-kicker?
   (previous default). Today's "Act now"/"Coming up" replace that shortcut; Capture is
   still one tap away (centered, raised) in the bottom nav.
 
+## 4c. Visual design: matching grainfinance.com
+- **Styles only, one file:** every colour lives in `:root` custom properties in
+  `styles.css` (documented there since the first version); this restyle is almost
+  entirely a `:root` swap plus a handful of hardcoded hex values that referenced the old
+  green brand directly (the header bar, the raised Capture button's pressed state, the
+  browser theme-color). No layout, feature or behaviour changed.
+- **Contrast deviates from the sampled screenshot values on purpose.** The requested
+  muted/secondary text tone (~#9AA6C8) measures 2.4:1 against white — well under the
+  4.5:1 WCAG AA minimum for normal text. I kept the requested navy heading and body-text
+  values (they already pass, 11.3:1 and 5.5:1), but darkened `--muted` to #687397 (4.7:1)
+  so hint text (asks, timestamps, relationship reasons) stays legible. This was flagged
+  explicitly in the request ("keep text contrast readable"), so I treated it as
+  authorization to adjust rather than copy the approximation verbatim.
+  Same reasoning for the brand blue: the requested ~#2F6BF0 is 4.7:1 on white, barely
+  over the minimum with no margin for anti-aliasing; deepened to #2557C7 (6.4:1) since
+  it's used both as link/button text color and as a button background under white text.
+- **No literal CSS gradient:** the site's gradient CTA works because the button is large
+  marketing real estate; every button in this app is a small functional control where
+  reliable contrast matters more than the gradient effect, and a gradient's lighter end
+  would fail contrast under white text. Used the solid deepened blue everywhere instead
+  (including the raised mobile Capture button, as requested).
+- **Status/tier colours: kept meaningful, only lightly harmonised.** Tiers A+→D now ramp
+  through the new navy→light-blue family (darkest = most important, same idea as before).
+  Temperature (hot/warm/cold), Going/Considering/Skip, and Pros/Cons/Biggest-drag keep
+  their original semantic hues (red/orange/blue, green/amber/grey, green/amber/red) —
+  these encode meaning independent of brand identity, and warm accents against a
+  cool navy/blue app read as intentional emphasis, not a clash.
+- **Typography:** added Inter via Google Fonts (`<link>` in `index.html`), with the
+  original system-font stack kept as the fallback in the same `font-family` list. The
+  service worker's `SHELL` list is unchanged (still only local files), so the font file
+  is never cached for offline use — offline, the app silently falls back to the system
+  font, which is the "looks fine offline" requirement satisfied by construction rather
+  than by an extra check.
+
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
 - One addition beyond the brief: "Add conference with AI" (3b). I placed it after the
