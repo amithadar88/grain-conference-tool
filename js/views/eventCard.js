@@ -1,5 +1,6 @@
 // The event card, shared by Events, Plan detail and the Add-conference review screen.
 import { FACTORS, FACTOR_LABELS, oneLineSummary } from '../scoring.js';
+import { companyGroups, peopleYouKnowLabel } from '../eventHistory.js';
 import { esc, safeUrl, fmtRange, fmtDate, tierClass, signalClass } from './ui.js';
 
 const STATUSES = [['going', 'Going'], ['considering', 'Considering'], ['skip', 'Skip']];
@@ -60,15 +61,19 @@ function provenance(c) {
   return `<span class="badge">${how} ${esc(c.addedBy)}, ${esc(fmtDate(c.addedAt))}</span>`;
 }
 
-// "👥 3 from a previous edition" — not part of the score, just a heads-up.
-const peopleBadgeHTML = (rows) => (rows.length
-  ? `<span class="badge people" title="Not part of the score">👥 ${rows.length} from a previous edition</span>`
-  : '');
+// "👥 3 contacts · 🏢 2 companies from a previous edition" — not part of the score, just a heads-up.
+const peopleBadgeHTML = (rows) => {
+  const label = peopleYouKnowLabel(rows);
+  return label ? `<span class="badge people" title="Not part of the score">${label}</span>` : '';
+};
 
 const peopleListHTML = (rows) => (rows.length
   ? `<div class="pc people"><h4>👥 People you know <span class="hint">(not part of the score)</span></h4>
-      <ul>${rows.map((r) => `<li><a href="#contacts/${encodeURIComponent(r.person.id)}">${esc(r.person.name)}</a>
-        ${r.person.company ? `· ${esc(r.person.company)}` : ''} · <span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span></li>`).join('')}</ul></div>`
+      ${companyGroups(rows).map((g) => `<div class="people-group">
+        <b>${esc(g.company || 'Company unknown')}</b>
+        <ul>${g.rows.map((r) => `<li><a href="#contacts/${encodeURIComponent(r.person.id)}">${esc(r.person.name)}</a>
+          · <span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span></li>`).join('')}</ul>
+      </div>`).join('')}</div>`
   : '');
 
 /**

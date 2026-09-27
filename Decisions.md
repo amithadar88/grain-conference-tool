@@ -196,6 +196,11 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
 ## 2b. "People you know" on events (a separate signal, not in the score)
 - **Feature:** each event shows who the team already met at a previous edition of the
   same series (name, company, current rules label), with a link to their contact page.
+- **Company-level too:** the chip and the expanded list also count/group by distinct
+  companies (`👥 N contacts · 🏢 M companies`), using `normCompany()` from `matching.js` so
+  suffix variants ("Ltd"/"GmbH") group together. Each contact's company is the one on
+  their *matching encounter*, not their current record — a later job change doesn't
+  retroactively change who they were at that past edition.
 - **Why it's a separate signal, not a scoring factor:** the score measures the *event*
   (audience, access, market, size, travel) and must stay stable — the same event should
   score the same whether Grain has been going for five years or is walking in cold. Who

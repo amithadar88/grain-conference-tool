@@ -2,7 +2,7 @@
 // except the follow-up draft button, which reuses the same AI call as the contact page.
 import { actNowRows, comingUpRows, yourNextTrip, nextTeamTrips } from '../today.js';
 import { computeGaps } from '../gaps.js';
-import { peopleYouKnow } from '../eventHistory.js';
+import { peopleYouKnow, peopleYouKnowLabel } from '../eventHistory.js';
 import { staffingChip } from './plan.js';
 import { renderFollowup } from './followup.js';
 import { esc, fmtRange, signalClass, tierClass } from './ui.js';
@@ -57,12 +57,12 @@ function actNowHTML(rows) {
 // One trip row. Personal view excludes me from the "who else" line; team view lists everyone.
 function tripMiniHTML(store, today, trip, showAllReps) {
   const reps = showAllReps ? trip.plan.reps : trip.plan.reps.filter((r) => r !== store.settings().me);
-  const known = peopleYouKnow(trip.conf, store, today).length;
+  const knownLabel = peopleYouKnowLabel(peopleYouKnow(trip.conf, store, today));
   return `<a class="mini next-trip tier-${tierClass(trip.tier)}" href="#events/${encodeURIComponent(trip.id)}">
     <b>${esc(trip.conf.name)}</b> <span class="muted">in ${trip.daysUntil} day${trip.daysUntil === 1 ? '' : 's'}</span>
     <small>${esc(fmtRange(trip.conf.startDate, trip.conf.endDate))} · ${esc(trip.conf.city)}</small>
     ${reps.length ? `<div class="hint">${showAllReps ? 'Going' : 'Also going'}: ${esc(reps.join(', '))}</div>` : ''}
-    ${known ? `<div class="hint">👥 ${known} from a previous edition</div>` : ''}
+    ${knownLabel ? `<div class="hint">${knownLabel}</div>` : ''}
   </a>`;
 }
 
@@ -82,10 +82,10 @@ function highlightBlock(store, today) {
 
 function tripRowHTML(store, today, s) {
   const chip = staffingChip(s.plan);
-  const known = peopleYouKnow(s.conf, store, today).length;
+  const knownLabel = peopleYouKnowLabel(peopleYouKnow(s.conf, store, today));
   return `<a class="mini tier-${tierClass(s.tier)}" href="#events/${encodeURIComponent(s.id)}">
     <b>${esc(s.conf.name)}</b> <span class="muted">in ${s.daysUntil} day${s.daysUntil === 1 ? '' : 's'}</span>
-    <small>${esc(fmtRange(s.conf.startDate, s.conf.endDate))} · ${esc(s.conf.city)}${known ? ` · 👥 ${known} from a previous edition` : ''}</small>
+    <small>${esc(fmtRange(s.conf.startDate, s.conf.endDate))} · ${esc(s.conf.city)}${knownLabel ? ` · ${knownLabel}` : ''}</small>
     ${chip ? `<span class="staff staff-${chip.kind}">${esc(chip.text)}</span>` : ''}
   </a>`;
 }

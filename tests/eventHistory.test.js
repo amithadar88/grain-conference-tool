@@ -1,5 +1,5 @@
 import { createStore, memoryStorage } from '../js/store.js';
-import { sameSeries, peopleYouKnow } from '../js/eventHistory.js';
+import { sameSeries, peopleYouKnow, companyGroups, companyCount, peopleYouKnowLabel } from '../js/eventHistory.js';
 
 const TODAY = '2026-09-26';
 
@@ -75,5 +75,61 @@ export default function eventHistoryTests(t, data) {
     );
     const names = peopleYouKnow(c, store, TODAY).map((r) => r.person.name);
     t.ok(!names.includes('Backdated Person'), 'same conferenceId excluded even if dated earlier');
+  });
+
+  t.group('companies: distinct companies among people you know (does not touch score/tier/matching)');
+
+  t.test("a person's company for THIS event is the one on their matching encounter, not their current one (job change)", () => {
+    const store = fresh();
+    const rows = peopleYouKnow(conf(store, 'money2020-europe-2027'), store, TODAY);
+    const jonathan = rows.find((r) => r.person.name === 'Jonathan Cohen');
+    t.eq(jonathan.company, 'Lumora Remit'); // where he was at the 2025 edition
+    t.ok(jonathan.person.company !== 'Lumora Remit', "the person record has since moved on (to Meridia FX) — that must not leak into this event's history");
+  });
+
+  t.test('real seed data: 4 contacts at 4 distinct companies for Money20/20 Europe 2027', () => {
+    const store = fresh();
+    const rows = peopleYouKnow(conf(store, 'money2020-europe-2027'), store, TODAY);
+    t.eq(rows.length, 4);
+    t.eq(companyCount(rows), 4);
+    t.eq(peopleYouKnowLabel(rows), '👥 4 contacts · 🏢 4 companies from a previous edition');
+  });
+
+  t.test('one contact, one company: singular wording', () => {
+    const store = fresh();
+    const rows = peopleYouKnow(conf(store, 'eurofinance-2027'), store, TODAY);
+    t.eq(rows.length, 1);
+    t.eq(peopleYouKnowLabel(rows), '👥 1 contact · 🏢 1 company from a previous edition');
+  });
+
+  t.test('no contacts: empty label (the chip is hidden)', () => {
+    t.eq(peopleYouKnowLabel([]), '');
+  });
+
+  t.test('company suffixes ("Ltd", "GmbH") normalise to one company, same as person-matching', () => {
+    const store = fresh();
+    const c = conf(store, 'wtm-london-2026');
+    const past = { conferenceId: null, event: 'WTM London', date: '2025-01-01', title: '', email: '', linkedin: '', temperature: 'warm', note: '', rep: 'Maya' };
+    store.saveCapture({ ...past, name: 'Amir Suffix A', company: 'Globex Travel' }, {});
+    store.saveCapture({ ...past, name: 'Amir Suffix B', company: 'Globex Travel GmbH' }, {});
+    const rows = peopleYouKnow(c, store, TODAY);
+    const group = companyGroups(rows).find((g) => g.rows.some((r) => r.person.name === 'Amir Suffix A'));
+    t.eq(group.rows.map((r) => r.person.name).sort(), ['Amir Suffix A', 'Amir Suffix B']);
+  });
+
+  t.test('a contact with no company on file gets its own group instead of being dropped, and is not counted as a company', () => {
+    const base = fresh();
+    const baseCount = companyCount(peopleYouKnow(conf(base, 'wtm-london-2026'), base, TODAY));
+
+    const store = fresh();
+    const c = conf(store, 'wtm-london-2026');
+    store.saveCapture(
+      { conferenceId: null, event: 'WTM London', date: '2025-01-01', name: 'No Company Rep', company: '', title: '', email: '', linkedin: '', temperature: 'warm', note: '', rep: 'Maya' },
+      {},
+    );
+    const rows = peopleYouKnow(c, store, TODAY);
+    t.eq(companyCount(rows), baseCount, 'an unknown company does not add to the count');
+    const group = companyGroups(rows).find((g) => g.rows.some((r) => r.person.name === 'No Company Rep'));
+    t.ok(group && !group.company, 'grouped separately (not dropped from the list)');
   });
 }

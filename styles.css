@@ -143,8 +143,11 @@ details summary { cursor: pointer; font-weight: 600; color: var(--brand); paddin
 .pc.cons { background: #fff4de; border-color: #c98a00; } .pc.cons h4 { color: #7a4d00; }
 .pc.drag { background: #fdecec; border-color: #b3261e; color: #7f1d1d; }
 .pc.people { background: var(--brand-2); border-color: var(--brand); }
-.pc.people ul { margin: 4px 0 0; padding-left: 18px; }
-.pc.people li { margin: 2px 0; }
+.people-group { margin-top: 8px; }
+.people-group:first-of-type { margin-top: 4px; }
+.people-group b { display: block; font-size: .85rem; }
+.people-group ul { margin: 2px 0 0; padding-left: 18px; }
+.people-group li { margin: 2px 0; }
 .ratings { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0; }
 .ratings td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
 /* Narrow screens: one block per factor, "Factor · 4/5 · 26 pts" on one line and the reason under it */
