@@ -14,6 +14,20 @@ export function staffingChip({ status, reps = [] }) {
   return { kind: status, text: [STATUS_TEXT[status], who].filter(Boolean).join(' · ') };
 }
 
+// Plan filters: "Mine" (assigned to me), Status, and hiding the low tiers. A pure
+// predicate (testable without the DOM) — never touches Gaps, which reads the whole team's plan.
+export function matchesPlanFilters(s, plan, state, me) {
+  if (state.mine && !plan.reps.includes(me)) return false;
+  if (state.status) {
+    if (state.status === 'undecided' ? plan.status : plan.status !== state.status) return false;
+  }
+  if (state.tier === 'hide-cd' && ['C', 'D'].includes(s.tier)) return false;
+  return true;
+}
+
+// Kept between tab switches (per browser session only), same convention as Events' state.
+const state = { mine: false, status: '', tier: '' };
+
 export function render(el, ctx) {
   const { store } = ctx;
   const scored = scoreAll(store.conferences()).filter((s) => inWindow(s.conf));
@@ -32,11 +46,27 @@ export function render(el, ctx) {
     </a>`;
   };
 
+  const me = store.currentRep();
+  const filtersHTML = () => `<div class="plan-row">
+    <button type="button" class="chip" id="plan-mine" aria-pressed="${state.mine}">Mine</button>
+    <select id="plan-status" aria-label="Status">
+      <option value="">All statuses</option>
+      <option value="going"${state.status === 'going' ? ' selected' : ''}>Going</option>
+      <option value="considering"${state.status === 'considering' ? ' selected' : ''}>Considering</option>
+      <option value="undecided"${state.status === 'undecided' ? ' selected' : ''}>Undecided</option>
+    </select>
+    <select id="plan-tier" aria-label="Tier">
+      <option value="">All tiers</option>
+      <option value="hide-cd"${state.tier === 'hide-cd' ? ' selected' : ''}>Hide C &amp; D</option>
+    </select>
+  </div>`;
+
   const timelineHTML = () => {
-    const now = scoreAll(store.conferences()).filter((x) => inWindow(x.conf));
+    const now = scoreAll(store.conferences()).filter((x) => inWindow(x.conf))
+      .filter((s) => matchesPlanFilters(s, store.conferencePlan(s.id), state, me));
     return months.map((m) => {
       const inMonth = now.filter((x) => x.conf.startDate.slice(0, 7) === m).sort((a, b) => a.conf.startDate.localeCompare(b.conf.startDate));
-      return `<div class="month"><h4>${monthLabel(m)}</h4>${inMonth.map(mini).join('') || '<div class="empty">No events</div>'}</div>`;
+      return `<div class="month"><h4>${monthLabel(m)}</h4>${inMonth.map(mini).join('') || '<div class="empty">No events match</div>'}</div>`;
     }).join('');
   };
 
@@ -44,6 +74,7 @@ export function render(el, ctx) {
   <h2>Plan · ${monthLabel(months[0])} – ${monthLabel(months[months.length - 1])}</h2>
   ${viewingAsHTML(store)}
   <div class="gaps"><b>Gaps</b><ul>${gapLines(gaps).map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
+  ${filtersHTML()}
   <div class="timeline">${timelineHTML()}</div>
   <dialog class="sheet" id="detail" aria-label="Event details">
     <div class="sheet-inner">
@@ -72,6 +103,13 @@ export function render(el, ctx) {
     timeline.innerHTML = timelineHTML();
     timeline.scrollLeft = left;
   };
+  el.querySelector('#plan-mine').addEventListener('click', (e) => {
+    state.mine = !state.mine;
+    e.currentTarget.setAttribute('aria-pressed', state.mine);
+    redrawTimeline();
+  });
+  el.querySelector('#plan-status').addEventListener('change', (e) => { state.status = e.target.value; redrawTimeline(); });
+  el.querySelector('#plan-tier').addEventListener('change', (e) => { state.tier = e.target.value; redrawTimeline(); });
   timeline.addEventListener('click', (e) => {
     const card = e.target.closest('[data-open]');
     if (!card || e.metaKey || e.ctrlKey || e.shiftKey || typeof dialog.showModal !== 'function') return; // new tab / old browser: follow the link

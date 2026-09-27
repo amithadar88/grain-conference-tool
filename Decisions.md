@@ -418,6 +418,25 @@ closing, or polite tire-kicker?
   deliberately left with no `defaultPlan`, so Gaps (section 3) has real "nobody assigned"
   lines to show, not an empty list.
 
+## 4e. Plan filters: Mine / Status / Tier
+- **One compact row, native controls:** a "Mine" toggle chip plus two `<select>`s
+  (Status, Tier), reusing `.plan-row`/`.chip` styling already used for event-card
+  controls — no new page, no new components.
+- **Filters affect the calendar grid only, never Gaps.** Gaps measures the whole team's
+  plan against the brief's "where are we under-invested"; if "Mine" silently changed what
+  Gaps reported, a rep filtering to their own events would see gaps that aren't really
+  gaps, just events someone else owns. `matchesPlanFilters()` is a pure predicate (its
+  own tests, no DOM) applied to the calendar only.
+- **"Undecided" is its own status value, not folded into "All":** a rep scanning for
+  events nobody has decided on yet is a different question from "show everything."
+- **Assigned rep, one event, multiple people:** the Plan model went from one `rep` string
+  to a `reps` list per conference (`js/store.js`, `js/views/eventCard.js`), driven by
+  section 2's "who else from the team is going" needing more than one name to ever be
+  meaningful. The single "Assign rep" dropdown became a row of toggle chips (one per team
+  member), matching the existing status-chip pattern instead of introducing a new control
+  type. This only touches the Plan/eventCard assignment UI — not matching, not the
+  capture-time nudge, not scoring.
+
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
 - One addition beyond the brief: "Add conference with AI" (3b). I placed it after the

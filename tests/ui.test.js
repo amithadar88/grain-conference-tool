@@ -1,7 +1,7 @@
 import { esc, safeUrl, fmtRange } from '../js/views/ui.js';
 import { eventCardHTML, clusterBadge } from '../js/views/eventCard.js';
 import { scoreAll } from '../js/scoring.js';
-import { staffingChip } from '../js/views/plan.js';
+import { staffingChip, matchesPlanFilters } from '../js/views/plan.js';
 import { eventPickerGroups } from '../js/views/capture.js';
 
 export default function uiTests(t, data) {
@@ -47,6 +47,30 @@ export default function uiTests(t, data) {
   });
   t.test('Reps but no decision yet -> neutral chip; nothing -> no chip', () => {
     t.eq([staffingChip({ status: null, reps: ['Yoni'] }), staffingChip({ status: null, reps: [] })], [{ kind: 'rep', text: 'Yoni' }, null]);
+  });
+
+  t.group('Plan: filters');
+
+  const s = (tier) => ({ tier });
+  t.test('Mine: only events where I\'m one of the assigned reps', () => {
+    t.eq(matchesPlanFilters(s('B'), { status: null, reps: ['Maya', 'Daniel'] }, { mine: true, status: '', tier: '' }, 'Maya'), true);
+    t.eq(matchesPlanFilters(s('B'), { status: null, reps: ['Daniel'] }, { mine: true, status: '', tier: '' }, 'Maya'), false);
+  });
+  t.test('Status: exact match, "undecided" means no status set', () => {
+    t.eq(matchesPlanFilters(s('B'), { status: 'going', reps: [] }, { mine: false, status: 'going', tier: '' }, 'Maya'), true);
+    t.eq(matchesPlanFilters(s('B'), { status: 'considering', reps: [] }, { mine: false, status: 'going', tier: '' }, 'Maya'), false);
+    t.eq(matchesPlanFilters(s('B'), { status: null, reps: [] }, { mine: false, status: 'undecided', tier: '' }, 'Maya'), true);
+    t.eq(matchesPlanFilters(s('B'), { status: 'going', reps: [] }, { mine: false, status: 'undecided', tier: '' }, 'Maya'), false);
+  });
+  t.test('Tier: "hide C & D" excludes only C and D', () => {
+    const state = { mine: false, status: '', tier: 'hide-cd' };
+    const plan = { status: null, reps: [] };
+    t.eq(['A+', 'A', 'B', 'C', 'D'].map((tier) => matchesPlanFilters(s(tier), plan, state, 'Maya')), [true, true, true, false, false]);
+  });
+  t.test('Filters combine (all must pass)', () => {
+    const plan = { status: 'going', reps: ['Maya'] };
+    t.eq(matchesPlanFilters(s('C'), plan, { mine: true, status: 'going', tier: 'hide-cd' }, 'Maya'), false); // tier fails
+    t.eq(matchesPlanFilters(s('B'), plan, { mine: true, status: 'going', tier: 'hide-cd' }, 'Maya'), true);
   });
 
   t.group('Cluster badge');
