@@ -268,7 +268,9 @@ function renderAi(box, ctx, person, encounters, signal) {
   const s = store.aiSummary(person.id);
   const generating = pendingArc.has(person.id);
   const stale = s && s.basedOnEncounters < encounters.length;
-  const showButton = !generating && (!s || stale);
+  // A summary (seeded or generated) is never a dead end: Regenerate is always available,
+  // styled small+secondary so it doesn't compete with the one-time primary Generate button.
+  const showButton = !generating;
   const body = s
     ? `<span class="sig ${signalClass(s.label)}">${esc(s.label)}</span>
        ${s.agreesWithRules ? '' : `<p class="disagree">AI disagrees with the rules (${esc(signal.label)}): ${esc(s.disagreementReason)}</p>`}
@@ -278,7 +280,7 @@ function renderAi(box, ctx, person, encounters, signal) {
     : '<p class="hint">AI reads the meeting notes and judges whether this is warming or a tire-kicker.</p>';
   box.innerHTML = `<div class="box ai${stale ? ' stale' : ''}"><b>AI summary</b>${body}
     ${generating ? '<p class="hint">Generating…</p>' : ''}
-    ${showButton ? `<button class="btn" id="ai-btn" data-needs-net>${s ? 'Regenerate AI summary' : 'Generate'}</button>
+    ${showButton ? `<button class="btn${s ? ' small' : ''}" id="ai-btn" data-needs-net>${s ? 'Regenerate' : 'Generate'}</button>
     <span class="needs-net-hint" hidden>Needs connection</span>` : ''}<p class="error" id="ai-err" hidden></p></div>`;
   if (generating) {
     // Came back to this contact while its summary was still generating elsewhere: redraw
@@ -308,7 +310,7 @@ function renderAi(box, ctx, person, encounters, signal) {
           err.textContent = r.ok ? "The AI's answer didn't make sense: try again." : r.message;
           err.hidden = false;
           btn.disabled = false;
-          btn.textContent = s ? 'Regenerate AI summary' : 'Generate';
+          btn.textContent = s ? 'Regenerate' : 'Generate';
         }
         return;
       }

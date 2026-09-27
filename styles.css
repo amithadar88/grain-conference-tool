@@ -94,6 +94,7 @@ a { color: var(--brand); }
 .btn:not(.primary):not(:disabled):hover, .btn:not(.primary):not(:disabled):focus-visible { background: var(--brand-2); }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
 .btn.big { width: 100%; min-height: 56px; font-size: 1.1rem; }
+.btn.small { min-height: 32px; padding: 4px 12px; font-size: .85rem; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .link { background: none; border: none; color: var(--brand); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
 input, select, textarea { font: inherit; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--text); min-height: var(--tap); }
