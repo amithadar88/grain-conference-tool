@@ -86,7 +86,7 @@ export function render(el, ctx) {
     }));
     const r = await aiIntake(store.settings().geminiKey, {
       name: basics.name, startDate: basics.startDate, endDate: basics.endDate, url: basics.website, pastedText: basics.pasted, calibration,
-    });
+    }, () => { btn.textContent = 'Taking longer than usual, retrying…'; });
     const check = r.ok ? validateDraft(r.draft) : null;
     if (!r.ok || !check.ok) {
       err.innerHTML = `${esc(r.ok ? "The AI's answer didn't make sense." : r.message)} <button type="button" class="link" id="go-manual">Fill in manually</button>`;

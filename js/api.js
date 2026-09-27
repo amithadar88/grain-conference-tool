@@ -43,9 +43,22 @@ async function post(fn, body, timeoutMs) {
 }
 
 export const aiStatus = (key) => post('ai', { task: 'status', key }, 8000);
-export const aiArc = (key, payload) => post('ai', { task: 'arc', key, ...payload }, 15000);
-export const aiFollowup = (key, payload) => post('ai', { task: 'followup', key, ...payload }, 15000);
-export const aiIntake = (key, payload) => post('ai', { task: 'intake', key, ...payload }, 15000);
+
+// One automatic retry for a transient AI error (timeout, unavailable, busy — the same
+// "probably just a cold start or a blip" set already used for HubSpot below). onRetry(),
+// if given, fires right before the retry starts so the UI can say "Taking longer than
+// usual, retrying…" at that exact moment, not after the fact.
+const AI_TRANSIENT = ['timeout', 'unavailable', 'busy'];
+export async function withAiRetry(call, onRetry) {
+  const first = await call();
+  if (first.ok || !AI_TRANSIENT.includes(first.error)) return first;
+  onRetry?.();
+  return call();
+}
+
+export const aiArc = (key, payload, onRetry) => withAiRetry(() => post('ai', { task: 'arc', key, ...payload }, 15000), onRetry);
+export const aiFollowup = (key, payload, onRetry) => withAiRetry(() => post('ai', { task: 'followup', key, ...payload }, 15000), onRetry);
+export const aiIntake = (key, payload, onRetry) => withAiRetry(() => post('ai', { task: 'intake', key, ...payload }, 15000), onRetry);
 
 // One automatic retry for transient HubSpot failures (cold start, timeout, rate limit, 5xx).
 // Safe because the push is an upsert by email: a retry never creates a duplicate.

@@ -7,7 +7,7 @@ import { createRunner } from './runner.js';
 const require = createRequire(import.meta.url);
 const ai = require('../netlify/functions/ai.js');
 const hubspot = require('../netlify/functions/hubspot.js');
-const { pushWithRetry } = await import('../js/api.js');
+const { pushWithRetry, withAiRetry } = await import('../js/api.js');
 
 const post = (body) => ({ httpMethod: 'POST', body: JSON.stringify(body) });
 const reply = (status, body, headers = {}) => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers });
@@ -240,6 +240,33 @@ test('client: still failing after the retry -> latest reason, marked as retried'
   const { sent, push } = fakePush([{ ok: true, results: [transient('a')] }, { ok: true, results: [{ ...transient('a'), message: 'HubSpot error 502: Bad Gateway' }] }]);
   const r = await pushWithRetry(push, [{ email: 'a' }], 0);
   t.eq([sent.length, r.results[0].message, r.results[0].retried], [2, 'HubSpot error 502: Bad Gateway', true]);
+});
+
+// ---- AI retry (js/api.js, shared by the relationship summary, follow-up draft and add-conference calls) ----
+test('AI retry: a transient error (timeout/unavailable/busy) is retried once, calling onRetry before the retry', async () => {
+  const order = [];
+  const call = async () => {
+    order.push('call');
+    return order.length === 1 ? { ok: false, error: 'timeout', message: 'Took too long' } : { ok: true, result: 'done' };
+  };
+  const r = await withAiRetry(call, () => order.push('onRetry'));
+  t.eq([order, r], [['call', 'onRetry', 'call'], { ok: true, result: 'done' }]);
+});
+test('AI retry: a permanent error (e.g. a bad key) is not retried', async () => {
+  let calls = 0;
+  const call = async () => { calls += 1; return { ok: false, error: 'bad_key', message: 'x' }; };
+  const r = await withAiRetry(call, () => { throw new Error('should not retry a permanent error'); });
+  t.eq([calls, r.error], [1, 'bad_key']);
+});
+test('AI retry: still failing after the retry returns the second (latest) failure, no further retries', async () => {
+  let calls = 0;
+  const call = async () => { calls += 1; return { ok: false, error: 'busy', message: `attempt ${calls}` }; };
+  const r = await withAiRetry(call);
+  t.eq([calls, r.message], [2, 'attempt 2']);
+});
+test('AI retry: success on the first try never calls onRetry', async () => {
+  const r = await withAiRetry(async () => ({ ok: true, result: 1 }), () => { throw new Error('should not retry a success'); });
+  t.eq(r, { ok: true, result: 1 });
 });
 
 // Run async tests one by one, then report like tests/run.mjs.

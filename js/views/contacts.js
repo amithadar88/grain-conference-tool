@@ -282,7 +282,7 @@ function renderAi(box, ctx, person, encounters, signal) {
       encounters: encounters.map((e) => ({ date: e.date, event: e.event, name: e.nameAsEntered, company: e.company, title: e.title, temperature: e.temperature, note: e.note })),
       rules: { label: signal.label, reasons: signal.reasons },
       today: ctx.today,
-    });
+    }, () => { btn.textContent = 'Taking longer than usual, retrying…'; });
     const err = box.querySelector('#ai-err');
     const check = r.ok ? validateArc(r.result) : null;
     if (!r.ok || !check.ok) {

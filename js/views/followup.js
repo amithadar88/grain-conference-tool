@@ -20,7 +20,7 @@ export function renderFollowup(container, ctx, { person, encounters, signal, ai 
       ai: ai ? { label: ai.label, arc: ai.arc, nextStep: ai.nextStep } : null,
       rep,
       today: ctx.today,
-    });
+    }, () => { btn.textContent = 'Taking longer than usual, retrying…'; });
     const check = r.ok ? validateFollowup(r.result) : null;
     btn.disabled = false;
     btn.textContent = wasRegenerate ? 'Draft again' : 'Draft follow-up';
