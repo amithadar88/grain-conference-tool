@@ -477,6 +477,16 @@ closing, or polite tire-kicker?
 - **Filters (section 1) never touch this:** Gaps always reads the whole team's plan,
   independent of the Plan page's own Mine/Status/Tier view filters.
 
+## 4h. Navigation order: people/actions left, conferences right
+- New order: Today, Contacts, Capture (raised centre on mobile), Events, Plan — same
+  logic on the desktop sidebar (Settings moves to the bottom there; it's the mobile
+  header gear on phones). Left-to-right / top-to-bottom groups by *what kind of question
+  it answers* (who do I know, what do I do) before *what's on the calendar*.
+- **The mobile and desktop orders turned out to be the same list**, so this needed no
+  `order` CSS at all — just reordering the `<a>` tags in `index.html`. The old version
+  needed a `@media (max-width: 899px)` block of explicit `order` values because mobile
+  and desktop wanted genuinely different sequences; that block is gone.
+
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**
 - One addition beyond the brief: "Add conference with AI" (3b). I placed it after the

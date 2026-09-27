@@ -42,13 +42,10 @@ a { color: var(--brand); }
 .cap-btn { display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin-top: -30px; border-radius: 50%; background: var(--brand); color: #fff; border: 4px solid #fff; box-shadow: 0 4px 14px rgba(37, 87, 199, .4); }
 .cap-btn svg { width: 30px; height: 30px; stroke-width: 2.6; }
 .tab-capture.active .cap-btn { background: var(--heading); }
-/* Narrow screens: Today, Events, Capture, Contacts, Plan — Settings moves to the header gear */
+/* Narrow screens: same left-to-right order as the DOM (Today, Contacts, Capture, Events,
+   Plan — people/actions on the left, conferences on the right); Settings moves to the
+   header gear instead of sitting in the bar. */
 @media (max-width: 899px) {
-  .tabs a[data-tab="today"] { order: 1; }
-  .tabs a[data-tab="events"] { order: 2; }
-  .tabs a.tab-capture { order: 3; }
-  .tabs a[data-tab="contacts"] { order: 4; }
-  .tabs a[data-tab="plan"] { order: 5; }
   .tabs a[data-tab="settings"] { display: none; }
 }
 /* Wide screens: the same items as a left sidebar; Capture is a highlighted item */
