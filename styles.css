@@ -29,6 +29,10 @@ a { color: var(--brand); }
 .brand { font-weight: 800; color: var(--heading); letter-spacing: -0.01em; }
 /* Offline strip: full width, directly under the header, pinned with it. */
 .net { flex: 1 0 100%; margin: 10px -16px -10px; padding: 6px 16px; background: var(--warn-bg); color: var(--warn); font-size: .85rem; font-weight: 600; text-align: center; border-bottom: 1px solid #f0d9a8; }
+/* Right-hand cluster (user icon, then gear on mobile) always sits at the far edge, whether
+   the header has one, two or three items — space-between alone can't do that once the user
+   icon and gear are separate flex children, since it spreads all of them evenly. */
+.topbar-right { display: flex; align-items: center; gap: 6px; }
 /* Mobile-only gear: Settings isn't in the bottom nav there (see below), so it lives in the header. */
 .gear-btn { display: flex; align-items: center; padding: 4px; color: var(--heading); }
 .gear-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -118,6 +122,18 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 .chip[data-status="going"][aria-pressed="true"] { background: #15803d; border-color: #15803d; }
 .chip[data-status="considering"][aria-pressed="true"] { background: #b45309; border-color: #b45309; }
 .chip[data-status="skip"][aria-pressed="true"] { background: #6b7280; border-color: #6b7280; }
+/* Rep assignment: a compact multi-select dropdown (same shape as the header user menu)
+   instead of one chip per team member, so it doesn't crowd out as the team grows. */
+.rep-picker { position: relative; }
+.rep-picker-btn { display: flex; align-items: center; gap: 6px; min-height: 36px; max-width: 100%; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: .9rem; color: var(--text); cursor: pointer; }
+.rep-picker-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-picker-btn .chev { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rep-picker-btn[aria-expanded="true"] { border-color: var(--brand); color: var(--brand); }
+.rep-picker-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 10; min-width: 180px; max-width: min(280px, 90vw); max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(20, 30, 60, .15); padding: 4px; }
+.rep-option { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 6px 10px; border: none; background: none; font: inherit; text-align: left; color: var(--text); cursor: pointer; border-radius: 8px; }
+.rep-option:hover, .rep-option:focus-visible { background: var(--brand-2); }
+.rep-option[aria-selected="true"] { color: var(--heading); font-weight: 700; }
+.rep-option .check { width: 16px; flex: none; color: var(--brand); font-weight: 700; }
 details summary { cursor: pointer; font-weight: 600; color: var(--brand); padding: 6px 0; min-height: 36px; }
 .why ul { margin: 0; padding-left: 18px; }
 .oneliner { font-size: .9rem; margin-top: 2px; }

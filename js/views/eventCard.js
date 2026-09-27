@@ -4,6 +4,36 @@ import { esc, safeUrl, fmtRange, fmtDate, tierClass, signalClass } from './ui.js
 
 const STATUSES = [['going', 'Going'], ['considering', 'Considering'], ['skip', 'Skip']];
 
+// "Maya, Daniel" up to 2 names, then "+N" for the rest, so the closed dropdown never
+// grows wider than the card as the team does.
+function repLabel(reps) {
+  if (!reps.length) return 'Assign to';
+  if (reps.length <= 2) return reps.join(', ');
+  return `${reps.slice(0, 2).join(', ')} +${reps.length - 2}`;
+}
+
+// Which event's rep dropdown is open, across all rendered cards (only one at a time).
+// Module state, not per-card: a rep pick re-renders the card from scratch (same path as
+// the status chips), and the dropdown needs to still know it should stay open afterward.
+let openRepPicker = null;
+
+function repPickerHTML(c, plan, team) {
+  const open = openRepPicker === c.id;
+  if (!team.length) {
+    return `<div class="rep-picker"><span class="hint">Add team names in Settings to assign someone</span></div>`;
+  }
+  const options = team.map((n) => `<button type="button" role="option" class="rep-option" data-rep="${esc(n)}" data-id="${esc(c.id)}" aria-selected="${plan.reps.includes(n)}">
+      <span class="check" aria-hidden="true">${plan.reps.includes(n) ? '✓' : ''}</span><span>${esc(n)}</span>
+    </button>`).join('');
+  return `<div class="rep-picker">
+    <button type="button" class="rep-picker-btn" data-rep-toggle="${esc(c.id)}" aria-haspopup="listbox" aria-expanded="${open}">
+      <span>${esc(repLabel(plan.reps))}</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="rep-picker-menu" role="listbox" aria-multiselectable="true" aria-label="Who's going"${open ? '' : ' hidden'}>${options}</div>
+  </div>`;
+}
+
 function listItems(items, empty) {
   if (!items.length) return `<li class="muted">${empty}</li>`;
   return items.map((i) => `<li><b>${esc(i.label)} (${i.score}/5)</b> ${esc(i.why)}</li>`).join('');
@@ -51,9 +81,6 @@ export function eventCardHTML(s, { plan = { status: null, reps: [] }, team = [],
   const site = safeUrl(c.website);
   const statusButtons = STATUSES.map(([v, label]) =>
     `<button type="button" class="chip" data-status="${v}" data-id="${esc(c.id)}" aria-pressed="${plan.status === v}">${label}</button>`).join('');
-  const repChips = team.map((n) =>
-    `<button type="button" class="chip" data-rep="${esc(n)}" data-id="${esc(c.id)}" aria-pressed="${plan.reps.includes(n)}">${esc(n)}</button>`).join('');
-
   return `<article class="card tier-${tierClass(s.tier)}${past ? ' past' : ''}" id="ev-${esc(c.id)}">
   <div class="card-head">
     <div>
@@ -67,7 +94,7 @@ export function eventCardHTML(s, { plan = { status: null, reps: [] }, team = [],
   <div class="oneliner">${esc(oneLineSummary(s))}</div>
   <div class="badges">${s.borderline ? `<span class="badge warn">${esc(s.borderline)}</span>` : ''}${clusterBadgeHTML(s.cluster)}${peopleBadgeHTML(peopleYouKnow)}${provenance(c)}</div>
   ${controls ? `<div class="plan-row">${statusButtons}</div>
-  <div class="plan-row reps" role="group" aria-label="Who's going">${repChips || '<span class="hint">Add team names in Settings to assign someone</span>'}</div>` : ''}
+  <div class="plan-row reps">${repPickerHTML(c, plan, team)}</div>` : ''}
   <details${open ? ' open' : ''}>
     <summary>Why ${esc(s.tier)}?</summary>
     <div class="why">
@@ -86,8 +113,31 @@ export function eventCardHTML(s, { plan = { status: null, reps: [] }, team = [],
 </article>`;
 }
 
+// Closes the open rep dropdown, wherever it's rendered (there's at most one open at a
+// time across the whole app), and returns focus to its toggle button.
+function closeRepPicker() {
+  if (!openRepPicker) return;
+  const id = openRepPicker;
+  openRepPicker = null;
+  document.querySelectorAll('.rep-picker-menu:not([hidden])').forEach((menu) => { menu.hidden = true; });
+  document.querySelectorAll('[data-rep-toggle][aria-expanded="true"]').forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
+  document.querySelector(`[data-rep-toggle="${CSS.escape(id)}"]`)?.focus();
+}
+
+// The outside-click/Escape close is global (a rep dropdown can outlive the render that
+// opened it), but bindEventCardControls runs again on every Events/Plan render — so this
+// installs it once for the page's lifetime instead of piling up duplicate listeners.
+let globalHandlersInstalled = false;
+function installGlobalRepPickerHandlers() {
+  if (globalHandlersInstalled) return;
+  globalHandlersInstalled = true;
+  document.addEventListener('click', (e) => { if (!e.target.closest('.rep-picker')) closeRepPicker(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRepPicker(); });
+}
+
 // Event delegation: one listener on the list container. onChange() re-draws the list.
 export function bindEventCardControls(root, store, onChange) {
+  installGlobalRepPickerHandlers();
   root.addEventListener('click', (e) => {
     const statusBtn = e.target.closest('[data-status]');
     if (statusBtn) {
@@ -97,6 +147,21 @@ export function bindEventCardControls(root, store, onChange) {
       onChange();
       return;
     }
+    const toggleBtn = e.target.closest('[data-rep-toggle]');
+    if (toggleBtn) {
+      e.stopPropagation(); // don't let the same click hit the document listener and immediately close it
+      const id = toggleBtn.dataset.repToggle;
+      const wasOpen = openRepPicker === id;
+      closeRepPicker();
+      if (!wasOpen) {
+        openRepPicker = id;
+        toggleBtn.setAttribute('aria-expanded', 'true');
+        const menu = toggleBtn.nextElementSibling;
+        menu.hidden = false;
+        menu.querySelector('[role="option"]')?.focus();
+      }
+      return;
+    }
     const repBtn = e.target.closest('[data-rep]');
     if (repBtn) {
       const id = repBtn.dataset.id;
@@ -104,7 +169,8 @@ export function bindEventCardControls(root, store, onChange) {
       const current = store.conferencePlan(id).reps;
       const next = current.includes(name) ? current.filter((r) => r !== name) : [...current, name];
       store.setConferencePlan(id, { reps: next });
-      onChange();
+      onChange(); // stays open: eventCardHTML re-checks openRepPicker (still set to `id`) on redraw
+      document.querySelector(`[data-rep="${CSS.escape(name)}"][data-id="${CSS.escape(id)}"]`)?.focus();
     }
   });
 }

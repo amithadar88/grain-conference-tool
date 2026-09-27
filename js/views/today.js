@@ -73,24 +73,44 @@ function highlightBlock(store, today) {
     : { label: '', html: '', ids: [] };
 }
 
+function tripRowHTML(store, today, s) {
+  const chip = staffingChip(s.plan);
+  const known = peopleYouKnow(s.conf, store, today).length;
+  return `<a class="mini tier-${tierClass(s.tier)}" href="#events/${encodeURIComponent(s.id)}">
+    <b>${esc(s.conf.name)}</b> <span class="muted">in ${s.daysUntil} day${s.daysUntil === 1 ? '' : 's'}</span>
+    <small>${esc(fmtRange(s.conf.startDate, s.conf.endDate))} · ${esc(s.conf.city)}${known ? ` · 👥 ${known} from a previous edition` : ''}</small>
+    ${chip ? `<span class="staff staff-${chip.kind}">${esc(chip.text)}</span>` : ''}
+  </a>`;
+}
+
 function comingUpHTML(store, today) {
+  const me = store.settings().me;
   const { label, html, ids } = highlightBlock(store, today);
   const { mode, items: rawItems } = comingUpRows(store, today);
   const idSet = new Set(ids);
   const items = rawItems.filter((s) => !idSet.has(s.id));
   if (!items.length && !html) return '<div class="box"><b>Coming up</b><p class="hint">Nothing planned in the next 60 days, and no A/A+ events waiting on a decision.</p></div>';
+
+  // Signed-in rep, and there's a real "planned" list (not the undecided-events fallback,
+  // where nothing is assigned to anyone yet): split into what's mine vs. everyone else's,
+  // so "Coming up" stops reading as one mixed pile. Each event lands in exactly one group.
+  if (me && mode === 'planned') {
+    const mine = items.filter((s) => s.plan.reps.includes(me));
+    const rest = items.filter((s) => !s.plan.reps.includes(me));
+    return `<div class="box"><b>Your trips</b>
+      ${html ? `<p class="subhead">✈️ ${esc(label)}</p>${html}` : ''}
+      ${mine.length ? `<div class="rows">${mine.map((s) => tripRowHTML(store, today, s)).join('')}</div>`
+        : (html ? '' : '<p class="hint">No other upcoming trips assigned to you.</p>')}
+      <p class="subhead">Rest of the team</p>
+      ${rest.length ? `<div class="rows">${rest.map((s) => tripRowHTML(store, today, s)).join('')}</div>`
+        : '<p class="hint">Nothing else planned in the next 60 days.</p>'}
+    </div>`;
+  }
+
   const title = mode === 'planned' ? 'Coming up' : 'Coming up — nothing staffed yet, decide on these';
   return `<div class="box"><b>${title}</b>
     ${html ? `<p class="subhead">✈️ ${esc(label)}</p>${html}` : ''}
-    <div class="rows">${items.map((s) => {
-    const chip = staffingChip(s.plan);
-    const known = peopleYouKnow(s.conf, store, today).length;
-    return `<a class="mini tier-${tierClass(s.tier)}" href="#events/${encodeURIComponent(s.id)}">
-      <b>${esc(s.conf.name)}</b> <span class="muted">in ${s.daysUntil} day${s.daysUntil === 1 ? '' : 's'}</span>
-      <small>${esc(fmtRange(s.conf.startDate, s.conf.endDate))} · ${esc(s.conf.city)}${known ? ` · 👥 ${known} from a previous edition` : ''}</small>
-      ${chip ? `<span class="staff staff-${chip.kind}">${esc(chip.text)}</span>` : ''}
-    </a>`;
-  }).join('')}</div></div>`;
+    <div class="rows">${items.map((s) => tripRowHTML(store, today, s)).join('')}</div></div>`;
 }
 
 // Short: only the actionable lines (unassigned top events, unstaffed verticals, empty
