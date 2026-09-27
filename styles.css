@@ -25,10 +25,16 @@ a { color: var(--brand); }
 .hint { font-size: .85rem; color: var(--muted); }
 
 /* Top bar and bottom tabs */
-.topbar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: #fff; color: var(--heading); border-bottom: 1px solid var(--line); }
+/* header-wrap is the sticky unit; the title row and the offline strip are its two plain
+   stacked children. Keeping the banner out of .topbar's own flex layout means the title
+   row (brand left, icons right) can never be pushed around by it — previously the banner
+   was a flex child of .topbar with flex-basis:100%, which forced it (and, once it wrapped,
+   everything after it) onto its own line, dropping the user icon/gear to the left below it. */
+.header-wrap { position: sticky; top: 0; z-index: 5; background: #fff; }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; color: var(--heading); border-bottom: 1px solid var(--line); }
 .brand { font-weight: 800; color: var(--heading); letter-spacing: -0.01em; }
-/* Offline strip: full width, directly under the header, pinned with it. */
-.net { flex: 1 0 100%; margin: 10px -16px -10px; padding: 6px 16px; background: var(--warn-bg); color: var(--warn); font-size: .85rem; font-weight: 600; text-align: center; border-bottom: 1px solid #f0d9a8; }
+/* Offline strip: full width, directly under the header, pinned with it via .header-wrap. */
+.net { padding: 6px 16px; background: var(--warn-bg); color: var(--warn); font-size: .85rem; font-weight: 600; text-align: center; border-bottom: 1px solid #f0d9a8; }
 /* Right-hand cluster (user icon, then gear on mobile) always sits at the far edge, whether
    the header has one, two or three items — space-between alone can't do that once the user
    icon and gear are separate flex children, since it spreads all of them evenly. */
