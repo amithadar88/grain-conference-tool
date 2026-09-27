@@ -526,26 +526,6 @@
       "generatedAt": "2026-09-27",
       "basedOnEncounters": 4,
       "model": "gemini-3.8-flash"
-    },
-    "p-dana": {
-      "label": "Warming - act now",
-      "arc": "Dana progressed from Treasury Manager manually hedging through a bank to Head of Treasury with a growing EUR/GBP exposure of ~EUR 40M/month, and is now VP Finance. Over three annual conferences, Dana moved from initial curiosity to asking about pricing and requesting a demo with the CFO before Q4 budget. Q4 2026 starts 1 Oct 2026, 4 days from today.",
-      "nextStep": "Schedule the requested demo with Dana and the CFO this week, before Q4 begins on 1 Oct 2026, 4 days from today.",
-      "agreesWithRules": true,
-      "disagreementReason": "",
-      "generatedAt": "2026-09-27",
-      "basedOnEncounters": 3,
-      "model": "gemini-3.5-flash-lite"
-    },
-    "p-jonathan": {
-      "label": "Warming - act now",
-      "arc": "Jonathan initially met Grain at Money20/20 Europe 2025 on 2025-06-04 as Treasury Manager at Lumora Remit, where Jonathan liked the product but lacked decision-making authority. Jonathan resurfaced at Fintech Meetup 2026 on 2026-03-31 having moved to Meridia FX as Head of Treasury, now owning the FX budget and asking to talk in April.",
-      "nextStep": "Reach out immediately to schedule the conversation Jonathan requested for April 2026, which is 5 months ago from today (2026-09-27).",
-      "agreesWithRules": false,
-      "disagreementReason": "The rules engine labeled this a job change to re-engage, but missed that Jonathan actively asked to talk in April 2026 with full budget ownership, making this an urgent follow-up rather than a mere re-engagement.",
-      "generatedAt": "2026-09-27",
-      "basedOnEncounters": 2,
-      "model": "gemini-3.5-flash-lite"
     }
   }
 }

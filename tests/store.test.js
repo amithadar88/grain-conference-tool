@@ -58,10 +58,13 @@ export default function storeTests(t, data) {
   });
   t.test('Seeded AI summaries (Task 15) load for a fresh visitor and survive Reset demo data', () => {
     const { store } = fresh();
-    for (const id of ['p-ahmed', 'p-mark', 'p-dana', 'p-jonathan']) {
+    for (const id of ['p-ahmed', 'p-mark']) {
       const s = store.aiSummary(id);
       t.ok(s && s.label && s.arc && s.nextStep, `${id} has a seeded summary`);
     }
+    // Dana and Jonathan are not seeded (their runs came from the fallback model): their
+    // cards should show the normal Generate state, not a pre-filled summary.
+    t.eq([store.aiSummary('p-dana'), store.aiSummary('p-jonathan')], [null, null]);
     store.resetOverlay();
     t.ok(store.aiSummary('p-ahmed').label === 'Warming - act now', 'seeded summaries are not part of the overlay, so Reset leaves them in place');
   });
