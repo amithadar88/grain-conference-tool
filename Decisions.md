@@ -173,8 +173,10 @@ decision-makers), then adjusted for size, logistics, and how easy it is to get m
 - Cooling (Tom Becker): hot -> warm -> cold, lost to the bank's FX desk; renewal in
   Jan 2027 = when to come back.
 - **Rules vs. AI (Ahmed Hassan):** rep logged "warm" in a rush, so rules say "Steady",
-  but the note asks for a proposal before end of Q3. The AI flags "act now" and explains
-  why. This is the clearest demo of why the AI is there.
+  but the note asks for a proposal before end of October. The AI flags "act now" and
+  explains why. This is the clearest demo of why the AI is there.
+  (Deadline moved from "end of Q3" to "end of October": live evaluation runs ~28 Sep -
+  mid-Oct 2026, and a 30 Sep deadline would already have passed by then.)
 - Single meeting (Priya Raman): hot, but no nudge. Nudges start from the 2nd meeting.
 - Companies are invented on purpose: fictional people at real companies would look
   like real Grain deals.
