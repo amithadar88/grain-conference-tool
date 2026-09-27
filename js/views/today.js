@@ -1,7 +1,8 @@
 // Today tab: the default landing page. "What should I do right now?" — all rules-based
 // except the follow-up draft button, which reuses the same AI call as the contact page.
 import { actNowRows, comingUpRows, yourNextTrip } from '../today.js';
-import { findGaps, gapLines, scoreAll } from '../scoring.js';
+import { scoreAll } from '../scoring.js';
+import { computeGaps } from '../gaps.js';
 import { peopleYouKnow } from '../eventHistory.js';
 import { staffingChip } from './plan.js';
 import { renderFollowup } from './followup.js';
@@ -76,11 +77,19 @@ function comingUpHTML(store, today) {
   }).join('')}</div></div>`;
 }
 
+// Short: only the actionable lines (unassigned top events, unstaffed verticals, empty
+// quarters). Market notes and "quiet season" are secondary — see them in full on Plan.
 function gapsHTML(store) {
-  const gaps = findGaps(scoreAll(store.conferences()));
-  const lines = gapLines(gaps).filter((l) => !l.startsWith('Every'));
+  const gaps = computeGaps(store);
+  const lines = [];
+  if (gaps.unassigned.length) {
+    lines.push(`${gaps.unassigned.length} top event${gaps.unassigned.length === 1 ? '' : 's'} (A+/A) with nobody assigned: ${
+      gaps.unassigned.map((s) => `<a href="#events/${encodeURIComponent(s.id)}">${esc(s.conf.name)}</a>`).join(', ')}`);
+  }
+  if (gaps.verticals.length) lines.push(`No Going event yet for: ${esc(gaps.verticals.join(', '))}`);
+  if (gaps.quarters.length) lines.push(`No Going event at all in: ${esc(gaps.quarters.join(', '))}`);
   return `<div class="box"><b>Plan gaps</b>
-    ${lines.length ? `<ul>${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : '<p class="hint">No gaps in the plan right now.</p>'}
+    ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>` : '<p class="hint">No gaps in the plan right now.</p>'}
     <p><a href="#plan">See Plan →</a></p></div>`;
 }
 

@@ -1,8 +1,28 @@
-// Plan tab: 13-month timeline by tier, clusters, status/rep, and a short gaps list.
-import { scoreAll, findGaps, gapLines, windowMonths, monthLabel, inWindow } from '../scoring.js';
+// Plan tab: 13-month timeline by tier, clusters, status/rep, and a gaps list that
+// measures the team's plan (not just which events exist).
+import { scoreAll, windowMonths, monthLabel, inWindow } from '../scoring.js';
+import { computeGaps } from '../gaps.js';
 import { peopleYouKnow } from '../eventHistory.js';
 import { esc, fmtRange, tierClass, viewingAsHTML } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
+
+// Full detail: actionable lines (with links) first, then secondary "market" notes.
+export function gapsHTML(gaps) {
+  const lines = [];
+  if (gaps.unassigned.length) {
+    lines.push(`${gaps.unassigned.length} top event${gaps.unassigned.length === 1 ? '' : 's'} (A+/A) with nobody assigned: ${
+      gaps.unassigned.map((s) => `<a href="#events/${encodeURIComponent(s.id)}">${esc(s.conf.name)}</a>`).join(', ')}`);
+  }
+  if (gaps.verticals.length) lines.push(`No Going event yet for: ${esc(gaps.verticals.join(', '))} (events exist, none staffed)`);
+  if (gaps.quarters.length) lines.push(`No Going event at all in: ${esc(gaps.quarters.join(', '))}`);
+  const main = lines.length
+    ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>`
+    : '<p class="hint">No gaps in the plan right now.</p>';
+  const notes = [];
+  if (gaps.regions.length) notes.push(`no A-tier event in ${esc(gaps.regions.join(', '))}`);
+  if (gaps.quietMonths.length) notes.push(`quiet season in the industry: ${esc(gaps.quietMonths.map(monthLabel).join(', '))}`);
+  return `<b>Gaps</b>${main}${notes.length ? `<p class="hint">Market notes: ${notes.join(' · ')}.</p>` : ''}`;
+}
 
 const STATUS_TEXT = { going: '✓ Going', considering: 'Considering', skip: 'Skip' };
 
@@ -30,9 +50,7 @@ const state = { mine: false, status: '', tier: '' };
 
 export function render(el, ctx) {
   const { store } = ctx;
-  const scored = scoreAll(store.conferences()).filter((s) => inWindow(s.conf));
   const months = windowMonths();
-  const gaps = findGaps(scored);
 
   const mini = (s) => {
     const c = s.conf;
@@ -73,7 +91,7 @@ export function render(el, ctx) {
   el.innerHTML = `<section class="view">
   <h2>Plan · ${monthLabel(months[0])} – ${monthLabel(months[months.length - 1])}</h2>
   ${viewingAsHTML(store)}
-  <div class="gaps"><b>Gaps</b><ul>${gapLines(gaps).map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
+  <div class="gaps">${gapsHTML(computeGaps(store))}</div>
   ${filtersHTML()}
   <div class="timeline">${timelineHTML()}</div>
   <dialog class="sheet" id="detail" aria-label="Event details">
@@ -87,6 +105,7 @@ export function render(el, ctx) {
   // Tapping a card opens its details over the Plan (a bottom sheet on phones, a window on desktop).
   // The Plan stays where it was underneath; changes made in the sheet update it in place.
   const timeline = el.querySelector('.timeline');
+  const gapsBox = el.querySelector('.gaps');
   const dialog = el.querySelector('#detail');
   const body = dialog.querySelector('.sheet-body');
   let openId = null;
@@ -119,7 +138,11 @@ export function render(el, ctx) {
     dialog.showModal();
     dialog.querySelector('.sheet-inner').scrollTop = 0;
   });
-  bindEventCardControls(body, store, () => { drawDetail(); redrawTimeline(); });
+  bindEventCardControls(body, store, () => {
+    drawDetail();
+    redrawTimeline();
+    gapsBox.innerHTML = gapsHTML(computeGaps(store));
+  });
   dialog.querySelector('.sheet-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); }); // tap on the dimmed area
 }

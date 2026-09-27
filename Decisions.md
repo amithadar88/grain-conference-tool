@@ -341,8 +341,9 @@ closing, or polite tire-kicker?
 - **All rules-based, reusing existing computations** — no new AI except the follow-up
   button: Act-now reuses `relationshipSignal` plus the same AI-override idea already in
   the arc summary (`isActNow`/`urgencyRank` in `signals.js`); Coming-up reuses
-  `scoreAll`/tiers/`conferencePlan`; Plan gaps reuses `findGaps`/`gapLines` verbatim
-  (moved into `scoring.js` so both Plan and Today call the same function).
+  `scoreAll`/tiers/`conferencePlan`; Plan gaps reuses `computeGaps()` (`js/gaps.js` —
+  originally `findGaps`/`gapLines` in `scoring.js`, moved and reworked into a
+  team-plan-aware module in section 4g, since both Plan and Today need the same numbers).
   This keeps Today "free" to compute — it's a different view over data that already
   exists, not a new source of truth.
 - **Act-now = rules Warming OR a saved AI override to "Warming - act now,"** not a new
@@ -449,6 +450,32 @@ closing, or polite tire-kicker?
 - **Pulled out of the list below it**, not shown twice: the trip is excluded from the
   regular Coming-up rows so the same event doesn't appear as both the headline card and a
   row underneath it.
+
+## 4g. Gaps: measuring the plan, not just the event list
+- **The brief asks "where are we under-invested" — that's a question about the team's
+  plan, not about which events exist.** The original Gaps ("no A/B event in month X",
+  "no A-tier event in region Y") only ever looked at the event list; it couldn't tell the
+  difference between "no good event exists here" and "a good event exists and nobody's
+  doing anything about it." The second one is the actionable gap. Moved from
+  `scoring.js` (pure, event-list-only) into a new `js/gaps.js` that also reads
+  `store.conferencePlan()`.
+- **Three actionable lines, each with a concrete next action:**
+  1. Top-tier (A+/A) events with **nobody assigned** (`reps.length === 0`, regardless of
+     status) — links straight to the event so the fix is one tap away.
+  2. Core verticals that **have** an A/B event but **none marked Going** — the room
+     exists, nobody's committed.
+  3. Quarters with **no Going event at all** — a scheduling gap, independent of vertical
+     or region.
+- **"Unassigned" checks `reps`, not `status`.** An event someone tagged themselves onto
+  but hasn't decided on yet (reps non-empty, status null) isn't a staffing gap anymore —
+  someone owns it. Only truly nobody's-problem events count.
+- **Region and "quiet month" notes are demoted, not dropped.** They're real information
+  (no A-tier event in North America; December/July/August are industry-quiet), but
+  they're about the *event list*, not the *plan* — the team can't fix a quiet month by
+  assigning someone to it. Kept as a secondary "Market notes" line on Plan; dropped
+  entirely from Today's condensed version (it only shows the actionable lines).
+- **Filters (section 1) never touch this:** Gaps always reads the whole team's plan,
+  independent of the Plan page's own Mine/Status/Tier view filters.
 
 ## 5. Scope: how I cut
 - All required features are explicit requirements, so I **cut depth, not features.**

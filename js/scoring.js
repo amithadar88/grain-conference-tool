@@ -151,33 +151,6 @@ export function inWindow(conf, win = WINDOW) {
   return windowMonths(win).includes(conf.startDate.slice(0, 7));
 }
 
-const isAB = (s) => ['A+', 'A', 'B'].includes(s.tier);
-const isA = (s) => ['A+', 'A'].includes(s.tier);
-
-export function findGaps(scored, win = WINDOW) {
-  const inWin = scored.filter((s) => inWindow(s.conf, win));
-  return {
-    months: windowMonths(win).filter((ym) => !inWin.some((s) => s.conf.startDate.slice(0, 7) === ym && isAB(s))),
-    regions: REGIONS.filter((r) => !inWin.some((s) => s.conf.region === r && isA(s))),
-    verticals: CORE_VERTICALS.filter((v) => !inWin.some((s) => (s.conf.verticals || []).includes(v) && isAB(s))),
-  };
-}
-
-// "No A/B event in: ..." / "Every month has at least one A/B event", one line per gap category.
-export function gapLines(gaps) {
-  const lines = [];
-  lines.push(gaps.months.length
-    ? `No A/B event in: ${gaps.months.map(monthLabel).join(', ')}`
-    : 'Every month has at least one A/B event');
-  lines.push(gaps.regions.length
-    ? `No A-tier event in: ${gaps.regions.join(', ')}`
-    : 'Every region has an A-tier event');
-  lines.push(gaps.verticals.length
-    ? `No A/B event for: ${gaps.verticals.join(', ')}`
-    : 'Every core vertical (payments, cross-border, travel, treasury, FX) has an A/B event');
-  return lines;
-}
-
 export function runningToday(conferences, today) {
   return conferences.find((c) => c.startDate <= today && today <= c.endDate) || null;
 }

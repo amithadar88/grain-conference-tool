@@ -1,5 +1,5 @@
 import {
-  scoreAll, roundScore, tierFor, sizeRating, borderline, findGaps, filterEvents,
+  scoreAll, roundScore, tierFor, sizeRating, borderline, filterEvents,
   defaultCaptureConference, runningToday, gapDays, windowMonths, monthLabel,
   shortWhy, oneLineSummary,
 } from '../js/scoring.js';
@@ -68,21 +68,14 @@ export default function scoringTests(t, data) {
     t.eq(scored.filter((s) => !Number.isInteger(s.score) || s.score < 0 || s.score > 100).map((s) => s.id), []);
   });
 
-  t.group('Planning gaps (expected values computed from the real data, not the docs)');
+  t.group('Planning window');
 
   t.test('Window is Sep 2026 - Sep 2027 (13 months)', () => {
     const m = windowMonths();
     t.eq([m.length, monthLabel(m[0]), monthLabel(m[12])], [13, 'Sep 2026', 'Sep 2027']);
   });
-  t.test('Months with no A+/A/B event', () => {
-    t.eq(findGaps(scored).months, ['2026-09', '2026-12', '2027-01', '2027-07', '2027-08']);
-  });
-  t.test('Regions with no A+/A event', () => {
-    t.eq(findGaps(scored).regions, ['North America', 'Middle East', 'Asia-Pacific']);
-  });
-  t.test('Every core vertical has an A+/A/B event', () => {
-    t.eq(findGaps(scored).verticals, []);
-  });
+  // Gaps now measure the team's plan (status/reps), not just the event list — see
+  // tests/gaps.test.js and js/gaps.js.
 
   t.group('Event list');
 

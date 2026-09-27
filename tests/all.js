@@ -7,8 +7,9 @@ import signals from './signals.test.js';
 import validate from './validate.test.js';
 import today from './today.test.js';
 import eventHistory from './eventHistory.test.js';
+import gaps from './gaps.test.js';
 
-export const suites = [scoring, store, ui, matching, signals, validate, today, eventHistory];
+export const suites = [scoring, store, ui, matching, signals, validate, today, eventHistory, gaps];
 
 export function runAll(t, data) {
   for (const suite of suites) suite(t, data);
