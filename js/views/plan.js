@@ -6,22 +6,56 @@ import { peopleYouKnow } from '../eventHistory.js';
 import { esc, fmtRange, tierClass } from './ui.js';
 import { clusterBadgeHTML, eventCardHTML, bindEventCardControls } from './eventCard.js';
 
-// Full detail: actionable lines (with links) first, then secondary "market" notes.
+// Every Gaps line states a fact from the data and, where one exists, a concrete next
+// step with named events — never a label or interpretation the data can't prove (no
+// "quiet season", no editorializing). At most 3 named events per line, so a big gap
+// still reads as one short sentence; the count in the sentence is the true total.
+const VERTICAL_LABELS = { payments: 'Payments', 'cross-border': 'Cross-border', travel: 'Travel', treasury: 'Treasury', fx: 'FX' };
+
+const eventLink = (s) => `<a href="#events/${encodeURIComponent(s.id)}">${esc(s.conf.name)}</a>`;
+const namedEvents = (events, max = 3) => events.slice(0, max).map(eventLink).join(', ');
+const scoredEvents = (events, max = 3) => events.slice(0, max)
+  .map((s) => `<a href="#events/${encodeURIComponent(s.id)}">${esc(s.conf.name)} (${esc(s.tier)} ${s.score})</a>`).join(', ');
+// "2027 Q2" (internal, sorts chronologically) -> "Q2 2027" (how a rep reads a quarter).
+const quarterLabel = (q) => { const [year, qtr] = q.split(' '); return `${qtr} ${year}`; };
+
+export function unassignedLine(gaps) {
+  if (!gaps.unassigned.length) return '';
+  const n = gaps.unassigned.length;
+  return `${n} A+/A event${n === 1 ? '' : 's'} with nobody assigned: ${namedEvents(gaps.unassigned)}. Assign someone or mark Skip.`;
+}
+
+export function verticalLines(gaps) {
+  return gaps.verticals.map((v) => {
+    const n = v.events.length;
+    const label = VERTICAL_LABELS[v.vertical] || v.vertical;
+    return `${esc(label)}: ${n} A/B event${n === 1 ? '' : 's'}, none marked Going: ${namedEvents(v.events)}.`;
+  });
+}
+
+export function quarterLines(gaps) {
+  return gaps.quarters.map((q) => {
+    const options = q.events.length ? ` Highest-scored options: ${scoredEvents(q.events)}.` : '';
+    return `${quarterLabel(q.quarter)}: no events marked Going.${options}`;
+  });
+}
+
+export function regionsLine(gaps) {
+  if (!gaps.regionNames.length) return '';
+  const options = gaps.regionEvents.length ? ` Highest-scored there: ${scoredEvents(gaps.regionEvents)}.` : '';
+  return `No A-tier events in ${esc(gaps.regionNames.join(', '))}.${options}`;
+}
+
+export function monthsLine(gaps) {
+  if (!gaps.quietMonths.length) return '';
+  return `No A/B events in: ${gaps.quietMonths.map(monthLabel).join(', ')}.`;
+}
+
+// Full detail: every applicable line, equal weight (no more "actionable" vs. "market
+// notes" split — a region or month gap is as much a fact as an unassigned event).
 export function gapsHTML(gaps) {
-  const lines = [];
-  if (gaps.unassigned.length) {
-    lines.push(`${gaps.unassigned.length} top event${gaps.unassigned.length === 1 ? '' : 's'} (A+/A) with nobody assigned: ${
-      gaps.unassigned.map((s) => `<a href="#events/${encodeURIComponent(s.id)}">${esc(s.conf.name)}</a>`).join(', ')}`);
-  }
-  if (gaps.verticals.length) lines.push(`No Going event yet for: ${esc(gaps.verticals.join(', '))} (events exist, none staffed)`);
-  if (gaps.quarters.length) lines.push(`No Going event at all in: ${esc(gaps.quarters.join(', '))}`);
-  const main = lines.length
-    ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>`
-    : '<p class="hint">No gaps in the plan right now.</p>';
-  const notes = [];
-  if (gaps.regions.length) notes.push(`no A-tier event in ${esc(gaps.regions.join(', '))}`);
-  if (gaps.quietMonths.length) notes.push(`quiet season in the industry: ${esc(gaps.quietMonths.map(monthLabel).join(', '))}`);
-  return `<b>Gaps</b>${main}${notes.length ? `<p class="hint">Market notes: ${notes.join(' · ')}.</p>` : ''}`;
+  const lines = [unassignedLine(gaps), ...verticalLines(gaps), ...quarterLines(gaps), regionsLine(gaps), monthsLine(gaps)].filter(Boolean);
+  return `<b>Gaps</b>${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>` : '<p class="hint">No gaps in the plan right now.</p>'}`;
 }
 
 const STATUS_TEXT = { going: '✓ Going', considering: 'Considering', skip: 'Skip' };

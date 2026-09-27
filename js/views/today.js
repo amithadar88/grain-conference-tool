@@ -3,7 +3,7 @@
 import { actNowRows, comingUpRows, yourNextTrip, nextTeamTrips } from '../today.js';
 import { computeGaps } from '../gaps.js';
 import { peopleYouKnow, peopleYouKnowLabel } from '../eventHistory.js';
-import { staffingChip } from './plan.js';
+import { staffingChip, unassignedLine, verticalLines, quarterLines } from './plan.js';
 import { renderFollowup } from './followup.js';
 import { esc, fmtRange, signalClass, tierClass } from './ui.js';
 
@@ -40,14 +40,19 @@ function guideHTML(store) {
   </div>`;
 }
 
+// A plain class of its own (not the "rows" list Contacts uses for whole-row-is-a-link
+// cards): each act-now row has its own inline "Open" button alongside "Draft follow-up",
+// which would otherwise collide with Contacts' ".rows li a { display: block }" card rule
+// and get forced full-width (that was the actual bug — the two rules were never meant to
+// share a class).
 function actNowHTML(rows) {
   if (!rows.length) return '<div class="box"><b>Act now</b><p class="hint">Nothing urgent right now.</p></div>';
-  return `<div class="box"><b>Act now</b><ul class="rows">${rows.map((r, i) => `<li>
-      <b>${esc(r.person.name)}</b> · ${esc(r.person.company || '')}
-      <div><span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span>
+  return `<div class="box"><b>Act now</b><ul class="act-rows">${rows.map((r, i) => `<li>
+      <div class="an-head"><b>${esc(r.person.name)}</b> <span class="muted">· ${esc(r.person.company || '')}</span></div>
+      <div class="an-signals"><span class="sig ${signalClass(r.signal.label)}">${esc(r.signal.label)}</span>
       ${r.ai && r.ai.label !== r.signal.label ? `<span class="sig ${signalClass(r.ai.label)}">AI: ${esc(r.ai.label)}</span>` : ''}</div>
-      <p class="hint">${esc(r.reason)}</p>
-      <div class="row">
+      <p class="hint an-reason">${esc(r.reason)}</p>
+      <div class="an-actions">
         <a class="btn" href="#contacts/${encodeURIComponent(r.person.id)}">Open</a>
         <span class="fu" data-fu="${i}"></span>
       </div>
@@ -121,16 +126,11 @@ function comingUpHTML(store, today) {
 }
 
 // Short: only the actionable lines (unassigned top events, unstaffed verticals, empty
-// quarters). Market notes and "quiet season" are secondary — see them in full on Plan.
+// quarters), same fact+action phrasing as the full list on Plan (shared with plan.js so
+// the two pages never say the same gap two different ways). Regions/months are Plan-only.
 function gapsHTML(store) {
   const gaps = computeGaps(store);
-  const lines = [];
-  if (gaps.unassigned.length) {
-    lines.push(`${gaps.unassigned.length} top event${gaps.unassigned.length === 1 ? '' : 's'} (A+/A) with nobody assigned: ${
-      gaps.unassigned.map((s) => `<a href="#events/${encodeURIComponent(s.id)}">${esc(s.conf.name)}</a>`).join(', ')}`);
-  }
-  if (gaps.verticals.length) lines.push(`No Going event yet for: ${esc(gaps.verticals.join(', '))}`);
-  if (gaps.quarters.length) lines.push(`No Going event at all in: ${esc(gaps.quarters.join(', '))}`);
+  const lines = [unassignedLine(gaps), ...verticalLines(gaps), ...quarterLines(gaps)].filter(Boolean);
   return `<div class="box"><b>Plan gaps</b>
     ${lines.length ? `<ul>${lines.map((l) => `<li>${l}</li>`).join('')}</ul>` : '<p class="hint">No gaps in the plan right now.</p>'}
     <p><a href="#plan">See Plan →</a></p></div>`;

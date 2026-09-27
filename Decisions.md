@@ -494,11 +494,19 @@ closing, or polite tire-kicker?
 - **"Unassigned" checks `reps`, not `status`.** An event someone tagged themselves onto
   but hasn't decided on yet (reps non-empty, status null) isn't a staffing gap anymore —
   someone owns it. Only truly nobody's-problem events count.
-- **Region and "quiet month" notes are demoted, not dropped.** They're real information
-  (no A-tier event in North America; December/July/August are industry-quiet), but
-  they're about the *event list*, not the *plan* — the team can't fix a quiet month by
-  assigning someone to it. Kept as a secondary "Market notes" line on Plan; dropped
-  entirely from Today's condensed version (it only shows the actionable lines).
+- **Every line is a fact the data can prove, plus a next step where one exists — no
+  labels the data can't back up.** Dropped "quiet season in the industry" (an
+  interpretation, not a fact) for a plain "No A/B events in: Dec 2026, Jan 2027, …".
+  Region and quarter gaps now name the **highest-scored options that exist there**
+  (`"Highest-scored options: Money20/20 Europe 2027 (A+ 98), …"`), not just the absence —
+  `computeGaps()` carries the actual scored events behind every gap (not just a count or
+  a name) so the view can state "N events" and separately name up to 3 of the
+  highest-scored ones, capped so a big gap still reads as one short sentence.
+- **Regions and months are equal-weight facts now, not a demoted "Market notes" aside.**
+  They're still about the *event list* rather than the *plan* (the team can't fix a quiet
+  month by assigning someone), but a soft "market notes" framing implied they mattered
+  less, which wasn't true — they're informational either way. Region/month lines stay
+  Plan-only (Today keeps its 3-line condensed version: unassigned, verticals, quarters).
 - **Filters (section 1) never touch this:** Gaps always reads the whole team's plan,
   independent of the Plan page's own Mine/Status/Tier view filters.
 
